@@ -26,6 +26,7 @@ const elements = {
     recommendationsList: () => document.getElementById('recommendations-list'),
     premiumFeatures: () => document.getElementById('premium-features'),
     pricingModal: () => document.getElementById('pricing-modal'),
+    contactModal: () => document.getElementById('contact-modal'),
     toast: () => document.getElementById('toast'),
     toastMessage: () => document.getElementById('toast-message')
 };
@@ -41,7 +42,110 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Check remaining free analyses
     updateFreeAnalysesUI();
+    
+    // Create contact modal if it doesn't exist
+    createContactModal();
 });
+
+/**
+ * Create contact modal for Agency plan
+ */
+function createContactModal() {
+    if (document.getElementById('contact-modal')) return;
+    
+    const modal = document.createElement('div');
+    modal.id = 'contact-modal';
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeContactModal()">&times;</button>
+            <div class="modal-header">
+                <h2>Plan Agence - 99€/mois</h2>
+                <p>Contactez notre équipe commerciale pour une démonstration personnalisée</p>
+            </div>
+            <form onsubmit="handleContactForm(event)">
+                <div class="form-group">
+                    <label for="contact-name">Nom complet</label>
+                    <input type="text" id="contact-name" placeholder="Jean Dupont" required>
+                </div>
+                <div class="form-group">
+                    <label for="contact-email">Email professionnel</label>
+                    <input type="email" id="contact-email" placeholder="jean@agence.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="contact-company">Nom de l'agence</label>
+                    <input type="text" id="contact-company" placeholder="Mon Agence Digital" required>
+                </div>
+                <div class="form-group">
+                    <label for="contact-clients">Nombre de clients</label>
+                    <select id="contact-clients" required>
+                        <option value="">Sélectionnez...</option>
+                        <option value="1-10">1-10 clients</option>
+                        <option value="11-25">11-25 clients</option>
+                        <option value="26-50">26-50 clients</option>
+                        <option value="50+">Plus de 50 clients</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="contact-message">Message (optionnel)</label>
+                    <textarea id="contact-message" rows="3" placeholder="Parlez-nous de vos besoins..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    Demander une démo
+                </button>
+            </form>
+            <div class="modal-footer">
+                <p>Ou contactez-nous directement : <a href="mailto:contact@webauditpro.com">contact@webauditpro.com</a></p>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+/**
+ * Show contact modal for Agency plan
+ */
+function contactSales() {
+    const modal = document.getElementById('contact-modal');
+    if (modal) {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+/**
+ * Close contact modal
+ */
+function closeContactModal() {
+    const modal = document.getElementById('contact-modal');
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+/**
+ * Handle contact form submission
+ */
+function handleContactForm(event) {
+    event.preventDefault();
+    
+    const name = document.getElementById('contact-name').value;
+    const email = document.getElementById('contact-email').value;
+    const company = document.getElementById('contact-company').value;
+    const clients = document.getElementById('contact-clients').value;
+    const message = document.getElementById('contact-message').value;
+    
+    // In a real app, send this to your backend
+    console.log('Agency contact request:', { name, email, company, clients, message });
+    
+    // Show success message
+    showToast('Merci ! Notre équipe vous contactera sous 24h.');
+    closeContactModal();
+    
+    // Reset form
+    event.target.reset();
+}
 
 /**
  * Update UI to show remaining free analyses
@@ -487,9 +591,10 @@ function showToast(message, duration = 3000) {
     }, duration);
 }
 
-// Close modal on escape key
+// Close modals on escape key
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         closePricingModal();
+        closeContactModal();
     }
 });
