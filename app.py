@@ -11,13 +11,77 @@ from urllib.parse import urlparse, urljoin
 import re
 import time
 import json
+import random
 
 app = Flask(__name__)
 CORS(app)
 
 # Configuration
 FREE_TIER_LIMIT = 3  # Analyses gratuites par session
-TIMEOUT = 10
+TIMEOUT_CONNECT = 5   # Timeout de connexion (secondes)
+TIMEOUT_READ = 15     # Timeout de lecture (secondes)
+MAX_RETRIES = 2       # Nombre de tentatives en cas d'échec
+
+# Pool de User-Agents réalistes (navigateurs modernes)
+USER_AGENTS = [
+    # Chrome Windows
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 11.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    # Chrome Mac
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    # Firefox Windows
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0",
+    # Firefox Mac
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:121.0) Gecko/20100101 Firefox/121.0",
+    # Safari Mac
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15",
+    # Edge Windows
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
+    # Chrome Linux
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    # Firefox Linux
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:121.0) Gecko/20100101 Firefox/121.0",
+]
+
+# Langues acceptées pour les headers
+ACCEPT_LANGUAGES = [
+    "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7",
+    "fr,en-US;q=0.9,en;q=0.8",
+    "en-US,en;q=0.9,fr;q=0.8",
+    "fr-FR,fr;q=0.9,en;q=0.8",
+]
+
+
+def get_random_headers():
+    """Génère des headers HTTP réalistes avec rotation de User-Agent"""
+    user_agent = random.choice(USER_AGENTS)
+    accept_language = random.choice(ACCEPT_LANGUAGES)
+
+    headers = {
+        "User-Agent": user_agent,
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        "Accept-Language": accept_language,
+        "Accept-Encoding": "gzip, deflate, br",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Cache-Control": "max-age=0",
+    }
+
+    # Ajouter des headers spécifiques à Chrome si c'est un UA Chrome
+    if "Chrome" in user_agent and "Edg" not in user_agent:
+        headers["Sec-Ch-Ua"] = '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"'
+        headers["Sec-Ch-Ua-Mobile"] = "?0"
+        headers["Sec-Ch-Ua-Platform"] = '"Windows"' if "Windows" in user_agent else '"macOS"'
+
+    return headers
 
 class WebsiteAnalyzer:
     """Analyse complète d'un site web pour SEO et conversion"""
@@ -42,19 +106,97 @@ class WebsiteAnalyzer:
         return url.rstrip('/')
 
     def fetch_page(self):
-        """Récupère la page avec mesure du temps de chargement"""
-        try:
-            start_time = time.time()
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
-            self.response = requests.get(self.url, headers=headers, timeout=TIMEOUT, allow_redirects=True)
-            self.load_time = time.time() - start_time
-            self.soup = BeautifulSoup(self.response.text, 'html.parser')
-            return True
-        except requests.exceptions.RequestException as e:
-            self.results['error'] = f"Impossible d'accéder au site: {str(e)}"
-            return False
+        """Récupère la page avec mesure du temps de chargement, retry et rotation de User-Agent"""
+        last_error = None
+
+        for attempt in range(MAX_RETRIES + 1):
+            try:
+                # Obtenir des headers aléatoires à chaque tentative
+                headers = get_random_headers()
+
+                # Créer une session pour gérer les cookies
+                session = requests.Session()
+
+                start_time = time.time()
+
+                # Timeout séparé pour connexion et lecture
+                self.response = session.get(
+                    self.url,
+                    headers=headers,
+                    timeout=(TIMEOUT_CONNECT, TIMEOUT_READ),
+                    allow_redirects=True,
+                    verify=True  # Vérification SSL
+                )
+
+                self.load_time = time.time() - start_time
+
+                # Vérifier le code de statut HTTP
+                if self.response.status_code >= 400:
+                    if self.response.status_code == 403:
+                        # Accès refusé - essayer avec un autre User-Agent
+                        if attempt < MAX_RETRIES:
+                            time.sleep(0.5 * (attempt + 1))  # Backoff progressif
+                            continue
+                        self.results['error'] = "Accès refusé par le site (403)"
+                        return False
+                    elif self.response.status_code == 404:
+                        self.results['error'] = "Page non trouvée (404)"
+                        return False
+                    elif self.response.status_code >= 500:
+                        if attempt < MAX_RETRIES:
+                            time.sleep(1 * (attempt + 1))
+                            continue
+                        self.results['error'] = f"Erreur serveur ({self.response.status_code})"
+                        return False
+
+                # Parser le HTML
+                self.soup = BeautifulSoup(self.response.text, 'html.parser')
+
+                # Stocker les infos de la requête pour debug
+                self.results['request_info'] = {
+                    'status_code': self.response.status_code,
+                    'final_url': self.response.url,
+                    'attempts': attempt + 1
+                }
+
+                return True
+
+            except requests.exceptions.ConnectTimeout:
+                last_error = "Timeout de connexion - le serveur ne répond pas"
+                if attempt < MAX_RETRIES:
+                    time.sleep(1 * (attempt + 1))
+                    continue
+
+            except requests.exceptions.ReadTimeout:
+                last_error = "Timeout de lecture - la page met trop de temps à charger"
+                if attempt < MAX_RETRIES:
+                    time.sleep(1 * (attempt + 1))
+                    continue
+
+            except requests.exceptions.SSLError:
+                last_error = "Erreur SSL - certificat invalide ou expiré"
+                # Pas de retry pour les erreurs SSL
+                break
+
+            except requests.exceptions.TooManyRedirects:
+                last_error = "Trop de redirections - possible boucle de redirection"
+                break
+
+            except requests.exceptions.ConnectionError:
+                last_error = "Erreur de connexion - vérifiez l'URL"
+                if attempt < MAX_RETRIES:
+                    time.sleep(1 * (attempt + 1))
+                    continue
+
+            except requests.exceptions.RequestException as e:
+                last_error = f"Erreur réseau: {str(e)}"
+                if attempt < MAX_RETRIES:
+                    time.sleep(0.5 * (attempt + 1))
+                    continue
+
+        # Toutes les tentatives ont échoué
+        self.results['error'] = f"Impossible d'accéder au site: {last_error}"
+        return False
 
     def analyze_speed(self):
         """Analyse la vitesse perçue"""
