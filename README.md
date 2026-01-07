@@ -19,7 +19,18 @@ Application mobile gamifiée inspirée du webtoon **Solo Leveling**, permettant 
   - 🛡️ **Vitalité** : Augmente les HP et la défense
 
 ### 📜 Quêtes Journalières
-5 quêtes se réinitialisent chaque jour à minuit :
+
+#### ⚠️ QUÊTE OBLIGATOIRE (Nouveau !)
+Une quête spéciale qui **DOIT** être complétée chaque jour :
+- **⚠️ Quête Quotidienne Obligatoire** : +200 XP + 2 Points de Compétence
+
+**ATTENTION :** Si cette quête n'est pas complétée avant minuit, vous recevrez une **PÉNALITÉ SÉVÈRE** :
+- 💔 Perte de 30% des HP Maximum
+- ⬇️ Perte de 100 Points d'Expérience
+- 📉 Perte d'1 point dans une statistique aléatoire
+
+#### Quêtes Optionnelles
+5 quêtes bonus qui se réinitialisent chaque jour à minuit :
 
 1. **💪 Pompes** : 100 répétitions - +50 XP
 2. **🏋️ Abdominaux** : 100 répétitions - +50 XP

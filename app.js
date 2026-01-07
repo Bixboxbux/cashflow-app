@@ -16,7 +16,8 @@ const player = {
     agility: 10,
     intelligence: 10,
     vitality: 10
-  }
+  },
+  penalties: 0 // Track number of penalties received
 };
 
 // Daily quests template
@@ -73,7 +74,21 @@ const dailyQuestsTemplate = [
   }
 ];
 
+// Mandatory daily quest (like in Solo Leveling)
+const mandatoryQuestTemplate = {
+  id: 'mandatory',
+  icon: '⚠️',
+  title: 'QUÊTE QUOTIDIENNE OBLIGATOIRE',
+  description: 'Compléter l\'entraînement du jour - ÉCHEC = PÉNALITÉ',
+  progress: 0,
+  target: 1,
+  xpReward: 200,
+  completed: false,
+  isMandatory: true
+};
+
 let quests = [];
+let mandatoryQuest = null;
 let lastResetDate = null;
 
 // Initialize on page load
@@ -89,6 +104,7 @@ function saveGameData() {
   const gameData = {
     player,
     quests,
+    mandatoryQuest,
     lastResetDate
   };
   localStorage.setItem('solo-leveling-data', JSON.stringify(gameData));
@@ -101,12 +117,18 @@ function loadGameData() {
     const data = JSON.parse(saved);
     Object.assign(player, data.player);
     quests = data.quests || [];
+    mandatoryQuest = data.mandatoryQuest || null;
     lastResetDate = data.lastResetDate;
   }
 
   // Initialize quests if empty
   if (quests.length === 0) {
     resetDailyQuests();
+  }
+
+  // Initialize mandatory quest if null
+  if (!mandatoryQuest) {
+    mandatoryQuest = JSON.parse(JSON.stringify(mandatoryQuestTemplate));
   }
 }
 
@@ -116,6 +138,11 @@ function checkDailyReset() {
   const today = now.toDateString();
 
   if (lastResetDate !== today) {
+    // Check if mandatory quest was completed before applying penalty
+    if (mandatoryQuest && !mandatoryQuest.completed && lastResetDate !== null) {
+      applyPenalty();
+    }
+
     resetDailyQuests();
     lastResetDate = today;
     saveGameData();
@@ -125,6 +152,7 @@ function checkDailyReset() {
 // Reset daily quests
 function resetDailyQuests() {
   quests = JSON.parse(JSON.stringify(dailyQuestsTemplate));
+  mandatoryQuest = JSON.parse(JSON.stringify(mandatoryQuestTemplate));
   saveGameData();
 }
 
@@ -180,11 +208,81 @@ function updateSkillPointButtons() {
   });
 }
 
+// Apply penalty for not completing mandatory quest
+function applyPenalty() {
+  player.penalties += 1;
+
+  // Penalty effects:
+  // 1. Lose 30% of max HP
+  const hpLoss = Math.floor(player.maxHp * 0.3);
+  player.maxHp = Math.max(50, player.maxHp - hpLoss);
+  player.hp = Math.min(player.hp, player.maxHp);
+
+  // 2. Lose 100 XP (can't go below 0)
+  player.xp = Math.max(0, player.xp - 100);
+
+  // 3. Lose 1 point from a random stat (can't go below 5)
+  const stats = ['strength', 'agility', 'intelligence', 'vitality'];
+  const randomStat = stats[Math.floor(Math.random() * stats.length)];
+  player.stats[randomStat] = Math.max(5, player.stats[randomStat] - 1);
+
+  saveGameData();
+
+  // Show dramatic penalty notification
+  showPenaltyNotification(hpLoss, randomStat);
+}
+
 // Update quests list display
 function updateQuestsList() {
   const container = document.getElementById('questsList');
 
-  container.innerHTML = quests.map(quest => {
+  // Build mandatory quest HTML (always shown first)
+  let mandatoryQuestHTML = '';
+  if (mandatoryQuest) {
+    const isCompleted = mandatoryQuest.completed;
+    mandatoryQuestHTML = `
+      <div class="quest-item ${isCompleted ? 'completed' : ''}" style="border: 3px solid ${isCompleted ? '#10b981' : '#ef4444'}; background: ${isCompleted ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.15)'}; margin-bottom: 1.5rem;">
+        <div class="quest-header">
+          <span class="quest-icon" style="font-size: 2.5rem;">${mandatoryQuest.icon}</span>
+          <div style="flex: 1;">
+            <div class="quest-title" style="color: ${isCompleted ? '#10b981' : '#ef4444'}; font-size: 1.3rem;">${mandatoryQuest.title}</div>
+          </div>
+          ${isCompleted ? '<span style="color: #10b981; font-size: 2rem;">✓</span>' : '<span style="color: #ef4444; font-size: 1.2rem; animation: pulse 2s infinite;">⚠️</span>'}
+        </div>
+
+        <div class="quest-desc" style="color: ${isCompleted ? 'rgba(255, 255, 255, 0.7)' : '#fca5a5'}; font-weight: 600;">${mandatoryQuest.description}</div>
+
+        <div class="quest-rewards" style="margin-left: 3.5rem; margin-top: 0.75rem;">
+          <span class="reward xp">+${mandatoryQuest.xpReward} XP</span>
+          <span class="reward sp">+2 Points de Compétence</span>
+        </div>
+
+        ${!isCompleted ? `
+          <div style="margin: 1rem 0 0 3.5rem; padding: 1rem; background: rgba(239, 68, 68, 0.2); border-radius: 0.5rem; border: 1px solid #ef4444;">
+            <div style="color: #fca5a5; font-weight: 700; margin-bottom: 0.5rem;">⚠️ PÉNALITÉ SI NON COMPLÉTÉE :</div>
+            <ul style="color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; margin-left: 1.5rem;">
+              <li>- 30% HP Maximum</li>
+              <li>- 100 Points d'Expérience</li>
+              <li>- 1 Point de Statistique aléatoire</li>
+            </ul>
+          </div>
+          <button class="btn btn-small" style="margin: 1rem 0 0 3.5rem; background: linear-gradient(135deg, #ef4444, #dc2626);" onclick="completeQuest('mandatory')">
+            ⚡ COMPLÉTER LA QUÊTE OBLIGATOIRE
+          </button>
+        ` : ''}
+      </div>
+
+      <style>
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+      </style>
+    `;
+  }
+
+  // Build regular quests HTML
+  const regularQuestsHTML = quests.map(quest => {
     const progressPercent = (quest.progress / quest.target) * 100;
     const isCompleted = quest.completed;
 
@@ -223,11 +321,24 @@ function updateQuestsList() {
       </div>
     `;
   }).join('');
+
+  // Combine mandatory quest + regular quests
+  container.innerHTML = mandatoryQuestHTML + (regularQuestsHTML ? '<div style="margin-top: 2rem;"><h3 style="color: #00d4ff; margin-bottom: 1rem; font-size: 1.2rem;">📋 Quêtes Optionnelles</h3>' + regularQuestsHTML + '</div>' : '');
 }
 
 // Complete a quest
 function completeQuest(questId) {
-  const quest = quests.find(q => q.id === questId);
+  let quest;
+  let isMandatory = false;
+
+  // Check if it's the mandatory quest
+  if (questId === 'mandatory') {
+    quest = mandatoryQuest;
+    isMandatory = true;
+  } else {
+    quest = quests.find(q => q.id === questId);
+  }
+
   if (!quest || quest.completed) return;
 
   // Mark as completed
@@ -237,17 +348,20 @@ function completeQuest(questId) {
   // Award XP
   gainXP(quest.xpReward);
 
-  // Award bonus skill point for run quest
-  if (quest.id === 'run') {
+  // Award bonus skill points
+  if (isMandatory) {
+    player.skillPoints += 2; // Mandatory quest gives 2 skill points
+    showNotification(`🎉 QUÊTE OBLIGATOIRE COMPLÉTÉE ! +${quest.xpReward} XP +2 Points`, 'success');
+  } else if (quest.id === 'run') {
     player.skillPoints += 1;
+    showNotification(`✓ Quête terminée: ${quest.title}`, 'success');
+  } else {
+    showNotification(`✓ Quête terminée: ${quest.title}`, 'success');
   }
 
   // Save and update
   saveGameData();
   updateUI();
-
-  // Show completion message
-  showNotification(`✓ Quête terminée: ${quest.title}`, 'success');
 }
 
 // Gain experience points
@@ -363,6 +477,74 @@ function showNotification(message, type = 'info') {
     setTimeout(() => notif.remove(), 300);
   }, 3000);
 }
+
+// Show penalty notification (dramatic style)
+function showPenaltyNotification(hpLoss, statLost) {
+  const statNames = {
+    strength: 'Force',
+    agility: 'Agilité',
+    intelligence: 'Intelligence',
+    vitality: 'Vitalité'
+  };
+
+  // Create full-screen penalty overlay
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.5s ease;
+  `;
+
+  overlay.innerHTML = `
+    <div style="text-align: center; padding: 2rem; max-width: 500px;">
+      <div style="font-size: 5rem; margin-bottom: 1rem; animation: pulse 1s infinite;">💀</div>
+      <div style="font-family: 'Orbitron', sans-serif; font-size: 2.5rem; font-weight: 900; color: #ef4444; text-shadow: 0 0 20px #ef4444; margin-bottom: 1rem;">
+        PÉNALITÉ APPLIQUÉE
+      </div>
+      <div style="color: #fca5a5; font-size: 1.2rem; margin-bottom: 2rem; line-height: 1.8;">
+        Vous n'avez pas complété la quête obligatoire !<br>
+        Le Système vous impose une sanction.
+      </div>
+      <div style="background: rgba(239, 68, 68, 0.2); border: 2px solid #ef4444; border-radius: 1rem; padding: 1.5rem; margin-bottom: 2rem;">
+        <div style="color: white; font-weight: 700; margin-bottom: 1rem; font-size: 1.1rem;">Effets de la Pénalité :</div>
+        <div style="color: #fca5a5; line-height: 2;">
+          ⚠️ -${hpLoss} HP Maximum<br>
+          ⚠️ -100 Points d'Expérience<br>
+          ⚠️ -1 ${statNames[statLost]}
+        </div>
+      </div>
+      <button onclick="closePenaltyNotif()" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; font-weight: 700; padding: 1rem 2rem; border-radius: 0.75rem; border: none; cursor: pointer; font-size: 1.1rem; box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);">
+        Accepter la Pénalité
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  // Also store reference for global close function
+  window.currentPenaltyOverlay = overlay;
+}
+
+// Close penalty notification
+function closePenaltyNotif() {
+  if (window.currentPenaltyOverlay) {
+    window.currentPenaltyOverlay.style.opacity = '0';
+    window.currentPenaltyOverlay.style.transition = 'opacity 0.3s';
+    setTimeout(() => {
+      window.currentPenaltyOverlay.remove();
+      window.currentPenaltyOverlay = null;
+    }, 300);
+  }
+  updateUI();
+}
+
+// Global function for inline handler
+window.closePenaltyNotif = closePenaltyNotif;
 
 // Reset timer for daily quests
 function startResetTimer() {
