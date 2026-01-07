@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebAudit Pro - Audit SEO & Conversion Gratuit</title>
+    <meta name="description" content="Analysez gratuitement votre site web: SEO, vitesse, conversion et mobile. Obtenez un rapport d'audit complet en 30 secondes.">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <span class="logo-icon">◈</span>
+                <span class="logo-text">WebAudit<span class="logo-pro">Pro</span></span>
+            </div>
+            <nav class="nav">
+                <a href="#features">Fonctionnalités</a>
+                <a href="#pricing">Tarifs</a>
+                <button class="btn btn-outline" onclick="scrollToAudit()">Audit Gratuit</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-badge">✨ +2,500 sites analysés ce mois</div>
+            <h1>Auditez votre site web en <span class="highlight">30 secondes</span></h1>
+            <p class="hero-subtitle">
+                Obtenez un rapport complet SEO, Conversion & Performance.<br>
+                Découvrez ce qui freine votre croissance.
+            </p>
+
+            <!-- Audit Form -->
+            <div class="audit-form" id="audit-form">
+                <div class="input-wrapper">
+                    <span class="input-icon">🔍</span>
+                    <input
+                        type="url"
+                        id="url-input"
+                        placeholder="Entrez l'URL de votre site (ex: monsite.com)"
+                        autocomplete="url"
+                    >
+                    <button class="btn btn-primary" id="analyze-btn" onclick="analyzeWebsite()">
+                        <span class="btn-text">Analyser</span>
+                        <span class="btn-loader" style="display: none;">
+                            <span class="spinner"></span>
+                        </span>
+                    </button>
+                </div>
+                <p class="form-hint">
+                    <span class="free-badge">GRATUIT</span>
+                    3 analyses gratuites • Aucune inscription requise
+                </p>
+            </div>
+
+            <!-- Trust Badges -->
+            <div class="trust-badges">
+                <div class="trust-item">
+                    <span class="trust-icon">🛡️</span>
+                    <span>100% Sécurisé</span>
+                </div>
+                <div class="trust-item">
+                    <span class="trust-icon">⚡</span>
+                    <span>Résultats en 30s</span>
+                </div>
+                <div class="trust-item">
+                    <span class="trust-icon">📊</span>
+                    <span>Rapport détaillé</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Results Section (Hidden by default) -->
+    <section class="results-section" id="results-section" style="display: none;">
+        <div class="container">
+            <!-- Score Overview -->
+            <div class="score-card" id="score-card">
+                <div class="score-header">
+                    <h2>Résultats de l'audit</h2>
+                    <p class="analyzed-url" id="analyzed-url"></p>
+                </div>
+
+                <div class="score-main">
+                    <div class="global-score">
+                        <div class="score-circle" id="score-circle">
+                            <svg viewBox="0 0 100 100">
+                                <circle class="score-bg" cx="50" cy="50" r="45"/>
+                                <circle class="score-progress" cx="50" cy="50" r="45" id="score-progress"/>
+                            </svg>
+                            <div class="score-value">
+                                <span class="score-number" id="score-number">0</span>
+                                <span class="score-max">/100</span>
+                            </div>
+                        </div>
+                        <div class="score-grade" id="score-grade">-</div>
+                    </div>
+
+                    <div class="score-breakdown">
+                        <h3>Scores détaillés</h3>
+                        <div class="score-items" id="score-items">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Issues & Recommendations -->
+            <div class="details-grid">
+                <!-- Issues -->
+                <div class="card issues-card">
+                    <h3>🔴 Problèmes détectés</h3>
+                    <div class="issues-list" id="issues-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Free Recommendations -->
+                <div class="card recommendations-card">
+                    <h3>✅ Recommandations</h3>
+                    <div class="recommendations-list" id="recommendations-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Premium Upsell -->
+            <div class="premium-upsell" id="premium-upsell">
+                <div class="upsell-header">
+                    <span class="upsell-badge">🔒 PREMIUM</span>
+                    <h3>Débloquez l'audit complet</h3>
+                    <p>Accédez à des analyses avancées pour maximiser vos conversions</p>
+                </div>
+                <div class="premium-features" id="premium-features">
+                    <!-- Populated by JS -->
+                </div>
+                <div class="upsell-cta">
+                    <button class="btn btn-premium" onclick="showPricingModal()">
+                        Débloquer pour 29€/mois
+                    </button>
+                    <p class="upsell-hint">Annulation à tout moment • Garantie 30 jours</p>
+                </div>
+            </div>
+
+            <!-- Export Section -->
+            <div class="export-section">
+                <button class="btn btn-secondary" onclick="exportReport()">
+                    📄 Télécharger le rapport
+                </button>
+                <button class="btn btn-outline" onclick="newAudit()">
+                    🔄 Nouvel audit
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <h2>Ce que nous analysons</h2>
+            <p class="section-subtitle">Un audit complet pour identifier vos leviers de croissance</p>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>SEO Technique</h3>
+                    <p>Balises title, meta, H1-H6, canonical, Open Graph et structure sémantique.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Conversion</h3>
+                    <p>CTA, formulaires, preuves sociales et éléments de réassurance.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Performance</h3>
+                    <p>Temps de chargement, poids de page et optimisation des images.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3>Mobile</h3>
+                    <p>Responsive design, viewport et compatibilité tactile.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🛡️</div>
+                    <h3>Sécurité</h3>
+                    <p>HTTPS, contenu mixte et bonnes pratiques de sécurité.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Rapport PDF</h3>
+                    <p>Export complet avec recommandations actionnables.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing" id="pricing">
+        <div class="container">
+            <h2>Tarifs simples et transparents</h2>
+            <p class="section-subtitle">Choisissez l'offre adaptée à vos besoins</p>
+
+            <div class="pricing-grid">
+                <!-- Free Plan -->
+                <div class="pricing-card">
+                    <div class="pricing-header">
+                        <h3>Gratuit</h3>
+                        <div class="price">
+                            <span class="price-amount">0€</span>
+                            <span class="price-period">/mois</span>
+                        </div>
+                    </div>
+                    <ul class="pricing-features">
+                        <li>✓ 3 audits par mois</li>
+                        <li>✓ Score global</li>
+                        <li>✓ Problèmes principaux</li>
+                        <li>✓ 5 recommandations</li>
+                        <li class="disabled">✗ Analyse des backlinks</li>
+                        <li class="disabled">✗ Benchmark concurrentiel</li>
+                        <li class="disabled">✗ Suivi historique</li>
+                        <li class="disabled">✗ Support prioritaire</li>
+                    </ul>
+                    <button class="btn btn-outline btn-full" onclick="scrollToAudit()">
+                        Commencer gratuitement
+                    </button>
+                </div>
+
+                <!-- Pro Plan -->
+                <div class="pricing-card featured">
+                    <div class="pricing-badge">POPULAIRE</div>
+                    <div class="pricing-header">
+                        <h3>Pro</h3>
+                        <div class="price">
+                            <span class="price-amount">29€</span>
+                            <span class="price-period">/mois</span>
+                        </div>
+                    </div>
+                    <ul class="pricing-features">
+                        <li>✓ Audits illimités</li>
+                        <li>✓ Score global détaillé</li>
+                        <li>✓ Tous les problèmes</li>
+                        <li>✓ Recommandations illimitées</li>
+                        <li>✓ Analyse des backlinks</li>
+                        <li>✓ Benchmark concurrentiel</li>
+                        <li>✓ Suivi historique (12 mois)</li>
+                        <li>✓ Export PDF illimité</li>
+                    </ul>
+                    <button class="btn btn-primary btn-full" onclick="showPricingModal()">
+                        Démarrer l'essai gratuit
+                    </button>
+                    <p class="pricing-hint">14 jours d'essai gratuit</p>
+                </div>
+
+                <!-- Agency Plan -->
+                <div class="pricing-card">
+                    <div class="pricing-header">
+                        <h3>Agence</h3>
+                        <div class="price">
+                            <span class="price-amount">99€</span>
+                            <span class="price-period">/mois</span>
+                        </div>
+                    </div>
+                    <ul class="pricing-features">
+                        <li>✓ Tout du plan Pro</li>
+                        <li>✓ White-label</li>
+                        <li>✓ 50 projets clients</li>
+                        <li>✓ API access</li>
+                        <li>✓ Rapports personnalisés</li>
+                        <li>✓ Multi-utilisateurs</li>
+                        <li>✓ Support dédié</li>
+                        <li>✓ Onboarding personnalisé</li>
+                    </ul>
+                    <button class="btn btn-outline btn-full" onclick="showPricingModal()">
+                        Contacter les ventes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Social Proof -->
+    <section class="social-proof">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-number">15,847</span>
+                    <span class="stat-label">Sites analysés</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">2,340</span>
+                    <span class="stat-label">Utilisateurs Pro</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">+45%</span>
+                    <span class="stat-label">Amélioration moyenne</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">4.9/5</span>
+                    <span class="stat-label">Satisfaction client</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="logo">
+                        <span class="logo-icon">◈</span>
+                        <span class="logo-text">WebAudit<span class="logo-pro">Pro</span></span>
+                    </div>
+                    <p>L'outil d'audit web pour les entrepreneurs ambitieux.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Produit</h4>
+                    <a href="#features">Fonctionnalités</a>
+                    <a href="#pricing">Tarifs</a>
+                    <a href="#">API</a>
+                </div>
+                <div class="footer-links">
+                    <h4>Ressources</h4>
+                    <a href="#">Blog</a>
+                    <a href="#">Guide SEO</a>
+                    <a href="#">FAQ</a>
+                </div>
+                <div class="footer-links">
+                    <h4>Légal</h4>
+                    <a href="#">CGV</a>
+                    <a href="#">Confidentialité</a>
+                    <a href="#">Mentions légales</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 WebAudit Pro. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Pricing Modal -->
+    <div class="modal" id="pricing-modal">
+        <div class="modal-backdrop" onclick="closePricingModal()"></div>
+        <div class="modal-content">
+            <button class="modal-close" onclick="closePricingModal()">&times;</button>
+            <div class="modal-header">
+                <span class="modal-badge">🚀 Offre de lancement</span>
+                <h2>Passez à WebAudit Pro</h2>
+                <p>Débloquez toutes les fonctionnalités et boostez votre croissance</p>
+            </div>
+            <div class="modal-body">
+                <div class="modal-price">
+                    <span class="old-price">49€</span>
+                    <span class="new-price">29€</span>
+                    <span class="price-period">/mois</span>
+                </div>
+                <ul class="modal-features">
+                    <li>✓ Audits illimités</li>
+                    <li>✓ Analyse des backlinks</li>
+                    <li>✓ Benchmark concurrentiel</li>
+                    <li>✓ Historique 12 mois</li>
+                    <li>✓ Export PDF illimité</li>
+                    <li>✓ Support prioritaire</li>
+                </ul>
+                <form class="modal-form" onsubmit="handlePayment(event)">
+                    <input type="email" placeholder="Votre email professionnel" required>
+                    <button type="submit" class="btn btn-premium btn-full">
+                        Démarrer l'essai gratuit de 14 jours
+                    </button>
+                </form>
+                <p class="modal-hint">
+                    💳 Aucune carte requise pour l'essai • Annulation en 1 clic
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Toast -->
+    <div class="toast" id="toast">
+        <span class="toast-icon">⚠️</span>
+        <span class="toast-message" id="toast-message"></span>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
