@@ -1,468 +1,400 @@
-// CashFlow App - Pure JavaScript
-// État de l'application
-const state = {
-  transactions: [],
-  isPro: false,
-  savingsGoal: { target: 1000, current: 0 },
-  budgets: {},
-  currentType: 'expense',
-  editingId: null,
-  activeTab: 'dashboard'
+// Solo Leveling - Player Development System
+
+// Player state
+const player = {
+  name: 'Hunter',
+  level: 1,
+  xp: 0,
+  xpToNextLevel: 100,
+  hp: 100,
+  maxHp: 100,
+  mp: 50,
+  maxMp: 50,
+  skillPoints: 0,
+  stats: {
+    strength: 10,
+    agility: 10,
+    intelligence: 10,
+    vitality: 10
+  }
 };
 
-const FREE_LIMIT = 20;
+// Daily quests template
+const dailyQuestsTemplate = [
+  {
+    id: 'pushups',
+    icon: '💪',
+    title: 'Pompes',
+    description: 'Effectuer 100 pompes',
+    progress: 0,
+    target: 100,
+    xpReward: 50,
+    completed: false
+  },
+  {
+    id: 'situps',
+    icon: '🏋️',
+    title: 'Abdominaux',
+    description: 'Effectuer 100 abdominaux',
+    progress: 0,
+    target: 100,
+    xpReward: 50,
+    completed: false
+  },
+  {
+    id: 'squats',
+    icon: '🦵',
+    title: 'Squats',
+    description: 'Effectuer 100 squats',
+    progress: 0,
+    target: 100,
+    xpReward: 50,
+    completed: false
+  },
+  {
+    id: 'run',
+    icon: '🏃',
+    title: 'Course',
+    description: 'Courir 10 kilomètres',
+    progress: 0,
+    target: 10,
+    xpReward: 100,
+    completed: false
+  },
+  {
+    id: 'meditation',
+    icon: '🧘',
+    title: 'Méditation',
+    description: 'Méditer pendant 30 minutes',
+    progress: 0,
+    target: 30,
+    xpReward: 75,
+    completed: false
+  }
+];
 
-const categories = {
-  expense: ['🍔 Alimentation', '🏠 Logement', '🚗 Transport', '🎮 Loisirs', '🛍️ Shopping', '💊 Santé', '📱 Abonnements', '💰 Autre'],
-  income: ['💼 Salaire', '🎁 Cadeau', '📈 Investissement', '💵 Autre']
-};
+let quests = [];
+let lastResetDate = null;
 
-// Chargement initial
+// Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
-  loadData();
-  setupEventListeners();
+  loadGameData();
+  checkDailyReset();
   updateUI();
-  updateProStatus();
+  startResetTimer();
 });
 
-// Setup event listeners
-function setupEventListeners() {
-  // Tabs
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tab = btn.dataset.tab;
-      if (btn.classList.contains('pro-tab') && !state.isPro) {
-        showUpgradeModal();
-      } else {
-        switchTab(tab);
-      }
-    });
-  });
-
-  // Type buttons
-  document.getElementById('typeExpense').addEventListener('click', () => setType('expense'));
-  document.getElementById('typeIncome').addEventListener('click', () => setType('income'));
-
-  // Form
-  document.getElementById('addTransactionBtn').addEventListener('click', () => showForm());
-  document.getElementById('closeForm').addEventListener('click', () => hideForm());
-  document.getElementById('submitBtn').addEventListener('click', handleSubmit);
-
-  // Modal
-  document.getElementById('upgradeBtn')?.addEventListener('click', showUpgradeModal);
-  document.getElementById('closeModal').addEventListener('click', hideUpgradeModal);
-  document.getElementById('activateProBtn').addEventListener('click', activatePro);
-  document.getElementById('upgradeFromAccounts')?.addEventListener('click', showUpgradeModal);
-  document.getElementById('upgradeFromBudgets')?.addEventListener('click', showUpgradeModal);
-  document.getElementById('upgradeFromReports')?.addEventListener('click', showUpgradeModal);
-
-  // Close insight
-  document.getElementById('closeInsight')?.addEventListener('click', () => {
-    document.getElementById('aiInsightCard').classList.add('hidden');
-  });
-}
-
-// Data persistence
-function saveData() {
-  localStorage.setItem('cashflow-data', JSON.stringify(state));
-}
-
-function loadData() {
-  const saved = localStorage.getItem('cashflow-data');
-  if (saved) {
-    Object.assign(state, JSON.parse(saved));
-  }
-}
-
-// UI Updates
-function updateUI() {
-  updateStats();
-  updateTransactionsList();
-  updateSavingsGoal();
-  updateTransactionCounter();
-  updateCategoryOptions();
-}
-
-function updateProStatus() {
-  const proBadge = document.getElementById('proBadge');
-  const upgradeBtn = document.getElementById('upgradeBtn');
-  const accountSelect = document.getElementById('account');
-  const categorySelect = document.getElementById('category');
-  
-  if (state.isPro) {
-    proBadge?.classList.remove('hidden');
-    upgradeBtn?.classList.add('hidden');
-    accountSelect?.classList.remove('hidden');
-    
-    // Update category placeholder
-    if (categorySelect) {
-      categorySelect.options[0].text = '🤖 Auto-détection IA';
-    }
-    
-    // Hide PRO badges on tabs
-    document.querySelectorAll('.pro-badge').forEach(badge => badge.classList.add('hidden'));
-  } else {
-    proBadge?.classList.add('hidden');
-    upgradeBtn?.classList.remove('hidden');
-    accountSelect?.classList.add('hidden');
-    
-    if (categorySelect) {
-      categorySelect.options[0].text = 'Choisir une catégorie';
-    }
-    
-    // Show PRO badges on tabs
-    document.querySelectorAll('.pro-badge').forEach(badge => badge.classList.remove('hidden'));
-  }
-}
-
-function updateStats() {
-  const totalIncome = state.transactions
-    .filter(t => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0);
-  
-  const totalExpense = state.transactions
-    .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0);
-  
-  const balance = totalIncome - totalExpense;
-
-  document.getElementById('totalIncome').textContent = `+${totalIncome.toFixed(2)}€`;
-  document.getElementById('totalExpense').textContent = `-${totalExpense.toFixed(2)}€`;
-  
-  const balanceEl = document.getElementById('totalBalance');
-  balanceEl.textContent = `${balance >= 0 ? '+' : ''}${balance.toFixed(2)}€`;
-  balanceEl.style.color = balance >= 0 ? '#10b981' : '#ef4444';
-}
-
-function updateTransactionsList() {
-  const list = document.getElementById('transactionsList');
-  
-  if (state.transactions.length === 0) {
-    list.innerHTML = '<p style="color: rgba(255, 255, 255, 0.5); text-align: center; padding: 2rem;">Aucune transaction pour le moment</p>';
-    return;
-  }
-
-  list.innerHTML = state.transactions.map(t => `
-    <div class="glass" style="border-radius: 0.75rem; padding: 1rem; transition: all 0.3s; cursor: pointer;" onmouseenter="this.style.background='rgba(255,255,255,0.08)'" onmouseleave="this.style.background='rgba(255,255,255,0.05)'">
-      <div style="display: flex; align-items: center; justify-content: space-between;">
-        <div style="flex: 1;">
-          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
-            <span style="font-size: 1.125rem;">${t.category.split(' ')[0]}</span>
-            <p style="color: white; font-weight: 600;">${t.description}</p>
-          </div>
-          <p style="color: rgba(255, 255, 255, 0.5); font-size: 0.875rem;">${t.category}</p>
-        </div>
-        <div style="display: flex; align-items: center; gap: 0.75rem;">
-          <p class="mono" style="font-size: 1.25rem; font-weight: 900; color: ${t.type === 'income' ? '#10b981' : '#ef4444'};">
-            ${t.type === 'income' ? '+' : '-'}${t.amount.toFixed(2)}€
-          </p>
-          <button onclick="deleteTransaction(${t.id})" style="background: none; padding: 0.5rem; color: #ef4444; opacity: 0.6; transition: opacity 0.3s;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="3 6 5 6 21 6"></polyline>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            </svg>
-          </button>
-        </div>
-      </div>
-    </div>
-  `).join('');
-}
-
-function updateSavingsGoal() {
-  const progress = Math.min((state.savingsGoal.current / state.savingsGoal.target) * 100, 100);
-  document.getElementById('savingsBar').style.width = `${progress}%`;
-  document.getElementById('savingsProgress').textContent = 
-    `${state.savingsGoal.current.toFixed(0)}€ / ${state.savingsGoal.target}€`;
-  
-  const message = state.savingsGoal.current >= state.savingsGoal.target
-    ? '🎉 Objectif atteint !'
-    : `Plus que ${(state.savingsGoal.target - state.savingsGoal.current).toFixed(2)}€`;
-  document.getElementById('savingsMessage').textContent = message;
-}
-
-function updateTransactionCounter() {
-  if (state.isPro) {
-    document.getElementById('transactionCounter').classList.add('hidden');
-    return;
-  }
-
-  document.getElementById('transactionCounter').classList.remove('hidden');
-  const counterText = document.getElementById('counterText');
-  const warningText = document.getElementById('warningText');
-  
-  counterText.textContent = `${state.transactions.length}/${FREE_LIMIT} transactions utilisées`;
-  counterText.style.color = state.transactions.length >= FREE_LIMIT ? '#ef4444' : '#c4b5fd';
-  
-  if (state.transactions.length >= FREE_LIMIT - 5 && state.transactions.length < FREE_LIMIT) {
-    warningText.classList.remove('hidden');
-  } else {
-    warningText.classList.add('hidden');
-  }
-}
-
-function updateCategoryOptions() {
-  const select = document.getElementById('category');
-  const options = categories[state.currentType];
-  
-  select.innerHTML = `<option value="">${state.isPro ? '🤖 Auto-détection IA' : 'Choisir une catégorie'}</option>` +
-    options.map(cat => `<option value="${cat}">${cat}</option>`).join('');
-}
-
-// Tab switching
-function switchTab(tabName) {
-  state.activeTab = tabName;
-  
-  // Update buttons
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    if (btn.dataset.tab === tabName) {
-      btn.style.background = 'linear-gradient(to right, #9333ea, #ec4899)';
-      btn.style.color = 'white';
-    } else {
-      btn.style.background = 'rgba(255, 255, 255, 0.05)';
-      btn.style.color = 'rgba(255, 255, 255, 0.6)';
-    }
-  });
-  
-  // Show/hide content
-  document.querySelectorAll('.tab-content').forEach(content => {
-    content.classList.add('hidden');
-  });
-  document.getElementById(`${tabName}-tab`).classList.remove('hidden');
-}
-
-// Form handling
-function showForm() {
-  document.getElementById('addTransactionBtn').classList.add('hidden');
-  document.getElementById('addForm').classList.remove('hidden');
-}
-
-function hideForm() {
-  document.getElementById('addForm').classList.add('hidden');
-  document.getElementById('addTransactionBtn').classList.remove('hidden');
-  resetForm();
-}
-
-function resetForm() {
-  document.getElementById('amount').value = '';
-  document.getElementById('description').value = '';
-  document.getElementById('category').value = '';
-  state.editingId = null;
-  document.getElementById('formTitle').textContent = 'Nouvelle transaction';
-}
-
-function setType(type) {
-  state.currentType = type;
-  
-  const expenseBtn = document.getElementById('typeExpense');
-  const incomeBtn = document.getElementById('typeIncome');
-  
-  if (type === 'expense') {
-    expenseBtn.style.background = '#ef4444';
-    expenseBtn.style.color = 'white';
-    incomeBtn.style.background = 'rgba(71, 85, 105, 0.5)';
-    incomeBtn.style.color = 'rgba(255, 255, 255, 0.6)';
-  } else {
-    incomeBtn.style.background = '#10b981';
-    incomeBtn.style.color = 'white';
-    expenseBtn.style.background = 'rgba(71, 85, 105, 0.5)';
-    expenseBtn.style.color = 'rgba(255, 255, 255, 0.6)';
-  }
-  
-  updateCategoryOptions();
-}
-
-async function handleSubmit() {
-  const amount = parseFloat(document.getElementById('amount').value);
-  const description = document.getElementById('description').value;
-  let category = document.getElementById('category').value;
-  const account = state.isPro ? document.getElementById('account').value : 'personal';
-
-  if (!amount || !description) {
-    alert('Montant et description requis');
-    return;
-  }
-
-  // Check limit for free users
-  if (!state.isPro && state.transactions.length >= FREE_LIMIT) {
-    showUpgradeModal();
-    return;
-  }
-
-  const submitBtn = document.getElementById('submitBtn');
-  submitBtn.disabled = true;
-  submitBtn.textContent = '⏳ Ajout en cours...';
-
-  // AI category suggestion for PRO users
-  if (state.isPro && !category && state.currentType === 'expense' && description.length > 2) {
-    category = await suggestCategory(description);
-  }
-
-  const transaction = {
-    id: state.editingId || Date.now(),
-    amount,
-    description,
-    category: category || (state.currentType === 'expense' ? '💰 Autre' : '💵 Autre'),
-    type: state.currentType,
-    account,
-    date: new Date().toISOString()
+// Save game data to localStorage
+function saveGameData() {
+  const gameData = {
+    player,
+    quests,
+    lastResetDate
   };
+  localStorage.setItem('solo-leveling-data', JSON.stringify(gameData));
+}
 
-  if (state.editingId) {
-    state.transactions = state.transactions.map(t => 
-      t.id === state.editingId ? transaction : t
-    );
-  } else {
-    state.transactions.unshift(transaction);
+// Load game data from localStorage
+function loadGameData() {
+  const saved = localStorage.getItem('solo-leveling-data');
+  if (saved) {
+    const data = JSON.parse(saved);
+    Object.assign(player, data.player);
+    quests = data.quests || [];
+    lastResetDate = data.lastResetDate;
   }
 
-  // Update savings
-  if (state.currentType === 'income') {
-    state.savingsGoal.current += amount;
-  } else {
-    state.savingsGoal.current = Math.max(0, state.savingsGoal.current - amount);
+  // Initialize quests if empty
+  if (quests.length === 0) {
+    resetDailyQuests();
+  }
+}
+
+// Check if daily quests should reset
+function checkDailyReset() {
+  const now = new Date();
+  const today = now.toDateString();
+
+  if (lastResetDate !== today) {
+    resetDailyQuests();
+    lastResetDate = today;
+    saveGameData();
+  }
+}
+
+// Reset daily quests
+function resetDailyQuests() {
+  quests = JSON.parse(JSON.stringify(dailyQuestsTemplate));
+  saveGameData();
+}
+
+// Update all UI elements
+function updateUI() {
+  updatePlayerInfo();
+  updateStats();
+  updateQuestsList();
+  updateSkillPointButtons();
+}
+
+// Update player information display
+function updatePlayerInfo() {
+  // Player level
+  document.getElementById('playerLevel').textContent = `Nv. ${player.level}`;
+
+  // XP bar
+  const xpPercent = (player.xp / player.xpToNextLevel) * 100;
+  document.getElementById('xpBar').style.width = `${xpPercent}%`;
+  document.getElementById('xpLabel').textContent = `${player.xp} / ${player.xpToNextLevel}`;
+
+  // HP bar
+  const hpPercent = (player.hp / player.maxHp) * 100;
+  document.getElementById('hpBar').style.width = `${hpPercent}%`;
+  document.getElementById('hpLabel').textContent = `${player.hp} / ${player.maxHp}`;
+
+  // MP bar
+  const mpPercent = (player.mp / player.maxMp) * 100;
+  document.getElementById('mpBar').style.width = `${mpPercent}%`;
+  document.getElementById('mpLabel').textContent = `${player.mp} / ${player.maxMp}`;
+}
+
+// Update stats display
+function updateStats() {
+  // Skill points
+  document.getElementById('skillPoints').textContent = player.skillPoints;
+
+  // Individual stats
+  document.getElementById('strengthValue').textContent = player.stats.strength;
+  document.getElementById('agilityValue').textContent = player.stats.agility;
+  document.getElementById('intelligenceValue').textContent = player.stats.intelligence;
+  document.getElementById('vitalityValue').textContent = player.stats.vitality;
+}
+
+// Update skill point buttons state
+function updateSkillPointButtons() {
+  const hasPoints = player.skillPoints > 0;
+  const buttons = ['strengthBtn', 'agilityBtn', 'intelligenceBtn', 'vitalityBtn'];
+
+  buttons.forEach(btnId => {
+    const btn = document.getElementById(btnId);
+    btn.disabled = !hasPoints;
+  });
+}
+
+// Update quests list display
+function updateQuestsList() {
+  const container = document.getElementById('questsList');
+
+  container.innerHTML = quests.map(quest => {
+    const progressPercent = (quest.progress / quest.target) * 100;
+    const isCompleted = quest.completed;
+
+    return `
+      <div class="quest-item ${isCompleted ? 'completed' : ''}">
+        <div class="quest-header">
+          <span class="quest-icon">${quest.icon}</span>
+          <div style="flex: 1;">
+            <div class="quest-title">${quest.title}</div>
+          </div>
+          ${isCompleted ? '<span style="color: #10b981; font-size: 1.5rem;">✓</span>' : ''}
+        </div>
+
+        <div class="quest-desc">${quest.description}</div>
+
+        <div style="margin: 0.75rem 0 0.75rem 3.5rem;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem; font-size: 0.85rem;">
+            <span>Progression</span>
+            <span class="orbitron">${quest.progress} / ${quest.target}</span>
+          </div>
+          <div class="progress-bar-bg" style="height: 0.5rem;">
+            <div class="progress-bar xp" style="width: ${progressPercent}%"></div>
+          </div>
+        </div>
+
+        <div class="quest-rewards">
+          <span class="reward xp">+${quest.xpReward} XP</span>
+          ${quest.id === 'run' ? '<span class="reward sp">+1 Point de Compétence</span>' : ''}
+        </div>
+
+        ${!isCompleted ? `
+          <button class="btn btn-small" style="margin: 1rem 0 0 3.5rem;" onclick="completeQuest('${quest.id}')">
+            ✓ Terminer la quête
+          </button>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+// Complete a quest
+function completeQuest(questId) {
+  const quest = quests.find(q => q.id === questId);
+  if (!quest || quest.completed) return;
+
+  // Mark as completed
+  quest.completed = true;
+  quest.progress = quest.target;
+
+  // Award XP
+  gainXP(quest.xpReward);
+
+  // Award bonus skill point for run quest
+  if (quest.id === 'run') {
+    player.skillPoints += 1;
   }
 
-  saveData();
+  // Save and update
+  saveGameData();
   updateUI();
-  hideForm();
-  
-  submitBtn.disabled = false;
-  submitBtn.textContent = 'Ajouter';
 
-  // Generate AI insight for PRO users
-  if (state.isPro && state.transactions.length >= 5) {
-    setTimeout(() => generateInsight(), 1000);
+  // Show completion message
+  showNotification(`✓ Quête terminée: ${quest.title}`, 'success');
+}
+
+// Gain experience points
+function gainXP(amount) {
+  player.xp += amount;
+
+  // Check for level up
+  while (player.xp >= player.xpToNextLevel) {
+    levelUp();
   }
-}
 
-async function suggestCategory(description) {
-  try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 50,
-        messages: [{
-          role: 'user',
-          content: `Catégorise cette transaction en UN seul mot parmi ces options EXACTES:
-- Alimentation (restaurants, courses alimentaires, supermarchés, boulangerie, café)
-- Logement (loyer, électricité, eau, gaz, internet, meubles)
-- Transport (essence, péage, uber, taxi, train, bus, parking)
-- Loisirs (cinéma, sport, jeux, concerts, sorties)
-- Shopping (vêtements, électronique, accessoires, cadeaux non-alimentaires)
-- Santé (médecin, pharmacie, mutuelle, sport santé)
-- Abonnements (Netflix, Spotify, salles de sport, magazines)
-- Autre (tout le reste)
-
-Transaction: "${description}"
-
-Réponds UNIQUEMENT avec le nom de la catégorie, sans emoji ni explication.`
-        }]
-      })
-    });
-
-    if (!response.ok) return null;
-    const data = await response.json();
-    const suggested = data.content[0].text.trim();
-    
-    const emojiMap = {
-      'Alimentation': '🍔 Alimentation',
-      'Logement': '🏠 Logement',
-      'Transport': '🚗 Transport',
-      'Loisirs': '🎮 Loisirs',
-      'Shopping': '🛍️ Shopping',
-      'Santé': '💊 Santé',
-      'Abonnements': '📱 Abonnements',
-      'Autre': '💰 Autre'
-    };
-    
-    return emojiMap[suggested] || null;
-  } catch (error) {
-    console.log('AI categorization unavailable');
-    return null;
-  }
-}
-
-async function generateInsight() {
-  const expenses = state.transactions.filter(t => t.type === 'expense');
-  if (expenses.length < 5) return;
-
-  const totalExpenses = expenses.reduce((sum, t) => sum + t.amount, 0);
-  const categorySums = expenses.reduce((acc, t) => {
-    const cat = t.category.split(' ')[1] || t.category;
-    acc[cat] = (acc[cat] || 0) + t.amount;
-    return acc;
-  }, {});
-
-  const topCategory = Object.entries(categorySums).sort((a, b) => b[1] - a[1])[0];
-
-  try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 150,
-        messages: [{
-          role: 'user',
-          content: `Analyse rapide de dépenses: ${totalExpenses.toFixed(0)}€ dépensés, dont ${topCategory[1].toFixed(0)}€ en ${topCategory[0]}. Donne UN conseil court et actionnable en 1-2 phrases max.`
-        }]
-      })
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      document.getElementById('aiInsightText').textContent = data.content[0].text.trim();
-      document.getElementById('aiInsightCard').classList.remove('hidden');
-    }
-  } catch (error) {
-    console.log('Insight generation unavailable');
-  }
-}
-
-function deleteTransaction(id) {
-  if (!confirm('Supprimer cette transaction ?')) return;
-  
-  const transaction = state.transactions.find(t => t.id === id);
-  if (transaction) {
-    if (transaction.type === 'income') {
-      state.savingsGoal.current = Math.max(0, state.savingsGoal.current - transaction.amount);
-    } else {
-      state.savingsGoal.current += transaction.amount;
-    }
-    state.transactions = state.transactions.filter(t => t.id !== id);
-    saveData();
-    updateUI();
-  }
-}
-
-// Modal handling
-function showUpgradeModal() {
-  const modal = document.getElementById('upgradeModal');
-  const subtext = document.getElementById('modalSubtext');
-  
-  if (!state.isPro && state.transactions.length >= FREE_LIMIT) {
-    subtext.textContent = "Tu as atteint la limite gratuite. Passe PRO pour continuer !";
-  } else {
-    subtext.textContent = "Prends le contrôle total de tes finances";
-  }
-  
-  modal.classList.remove('hidden');
-}
-
-function hideUpgradeModal() {
-  document.getElementById('upgradeModal').classList.add('hidden');
-}
-
-function activatePro() {
-  alert('🎉 Bienvenue dans CashFlow PRO !\n\nToutes les fonctionnalités sont maintenant débloquées.\n\n(Intégration Stripe à venir pour les vrais paiements)');
-  state.isPro = true;
-  saveData();
-  updateProStatus();
+  saveGameData();
   updateUI();
-  hideUpgradeModal();
+}
+
+// Level up the player
+function levelUp() {
+  player.xp -= player.xpToNextLevel;
+  player.level += 1;
+  player.skillPoints += 3;
+
+  // Increase XP requirement for next level
+  player.xpToNextLevel = Math.floor(player.xpToNextLevel * 1.5);
+
+  // Increase max HP and MP
+  player.maxHp += 10;
+  player.hp = player.maxHp; // Restore HP on level up
+  player.maxMp += 5;
+  player.mp = player.maxMp; // Restore MP on level up
+
+  // Show level up notification
+  showLevelUpNotification();
+
+  saveGameData();
+  updateUI();
+}
+
+// Show level up notification
+function showLevelUpNotification() {
+  const notif = document.getElementById('levelUpNotif');
+  const levelElement = document.getElementById('newLevel');
+  const playerLevelElement = document.getElementById('playerLevel');
+
+  levelElement.textContent = player.level;
+  notif.classList.remove('hidden');
+  playerLevelElement.classList.add('level-up-animation');
+
+  setTimeout(() => {
+    playerLevelElement.classList.remove('level-up-animation');
+  }, 500);
+}
+
+// Close level up notification
+function closeLevelUpNotif() {
+  document.getElementById('levelUpNotif').classList.add('hidden');
+}
+
+// Increase a stat
+function increaseStat(statName) {
+  if (player.skillPoints <= 0) return;
+
+  player.stats[statName] += 1;
+  player.skillPoints -= 1;
+
+  // Update derived stats based on stat increase
+  if (statName === 'vitality') {
+    player.maxHp += 5;
+    player.hp += 5;
+  } else if (statName === 'intelligence') {
+    player.maxMp += 3;
+    player.mp += 3;
+  }
+
+  saveGameData();
+  updateUI();
+
+  // Show stat increase effect
+  const valueElement = document.getElementById(`${statName}Value`);
+  valueElement.style.transform = 'scale(1.3)';
+  valueElement.style.color = '#fbbf24';
+
+  setTimeout(() => {
+    valueElement.style.transform = 'scale(1)';
+    valueElement.style.color = '#00d4ff';
+  }, 300);
+}
+
+// Show notification
+function showNotification(message, type = 'info') {
+  // Create notification element
+  const notif = document.createElement('div');
+  notif.style.cssText = `
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    background: ${type === 'success' ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #a855f7, #ec4899)'};
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    box-shadow: 0 0 30px rgba(168, 85, 247, 0.5);
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+  `;
+  notif.textContent = message;
+
+  document.body.appendChild(notif);
+
+  // Remove after 3 seconds
+  setTimeout(() => {
+    notif.style.opacity = '0';
+    notif.style.transition = 'opacity 0.3s';
+    setTimeout(() => notif.remove(), 300);
+  }, 3000);
+}
+
+// Reset timer for daily quests
+function startResetTimer() {
+  updateResetTimer();
+  setInterval(updateResetTimer, 1000);
+}
+
+function updateResetTimer() {
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
+
+  const diff = tomorrow - now;
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+  const timerElement = document.getElementById('resetTimer');
+  timerElement.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+  // Check if we need to reset quests
+  if (hours === 23 && minutes === 59 && seconds === 59) {
+    setTimeout(() => {
+      checkDailyReset();
+      updateUI();
+      showNotification('📜 Nouvelles quêtes journalières disponibles !', 'info');
+    }, 1000);
+  }
 }
 
 // Global functions for inline handlers
-window.deleteTransaction = deleteTransaction;
+window.completeQuest = completeQuest;
+window.increaseStat = increaseStat;
+window.closeLevelUpNotif = closeLevelUpNotif;
