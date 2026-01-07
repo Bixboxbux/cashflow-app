@@ -579,11 +579,16 @@ function closePricingModal() {
 }
 
 /**
- * Handle payment form submission - Redirect to Stripe Checkout
+ * Handle payment form submission - Subscribe to Pro plan
  */
 async function handlePayment(event) {
     event.preventDefault();
-    const email = event.target.querySelector('input').value;
+    const email = event.target.querySelector('input').value.trim();
+
+    if (!email) {
+        showToast('Veuillez entrer votre email');
+        return;
+    }
 
     // Track GA4 event
     trackEvent('begin_checkout', {
@@ -593,10 +598,14 @@ async function handlePayment(event) {
     });
 
     try {
-        const response = await fetch('/create-checkout-session', {
+        // Subscribe email with plan "pro"
+        const response = await fetch('/api/subscribe', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email })
+            body: JSON.stringify({
+                email,
+                plan: 'pro'
+            })
         });
 
         const data = await response.json();
@@ -610,13 +619,21 @@ async function handlePayment(event) {
         localStorage.setItem('userEmail', email);
         state.userEmail = email;
 
-        // Redirect to Stripe Checkout
-        if (data.url) {
-            window.location.href = data.url;
-        }
+        // Show success message
+        showToast('Merci ! Vérifiez votre boîte mail pour activer votre essai gratuit.');
+
+        // Track GA4 event
+        trackEvent('lead_captured', { method: 'pro_signup', plan: 'pro' });
+
+        // Close modal after 2 seconds
+        setTimeout(() => {
+            closePricingModal();
+            event.target.reset();
+        }, 2000);
+
     } catch (error) {
-        console.error('Checkout error:', error);
-        showToast('Erreur lors de la redirection vers le paiement');
+        console.error('Subscribe error:', error);
+        showToast('Erreur lors de l\'inscription');
     }
 }
 
@@ -639,7 +656,7 @@ function closeContactModal() {
 /**
  * Handle contact form submission (Agency plan)
  */
-function handleContactForm(event) {
+async function handleContactForm(event) {
     event.preventDefault();
 
     const formData = new FormData(event.target);
@@ -648,23 +665,50 @@ function handleContactForm(event) {
         email: formData.get('email'),
         agency: formData.get('agency'),
         clients: formData.get('clients'),
-        message: formData.get('message') || ''
+        message: formData.get('message') || '',
+        plan: 'agence'
     };
 
-    // Simulate form submission
-    console.log('Contact form submitted:', data);
+    if (!data.email) {
+        showToast('Veuillez entrer votre email');
+        return;
+    }
 
-    // Show success message
-    showToast('Demande envoyée ! Notre équipe vous contactera sous 24h.');
+    try {
+        // Subscribe email with plan "agence" and contact info
+        const response = await fetch('/api/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
 
-    // Close modal
-    closeContactModal();
+        const result = await response.json();
 
-    // Reset form
-    event.target.reset();
+        if (result.error) {
+            showToast('Erreur: ' + result.error);
+            return;
+        }
 
-    // In a real app, this would send data to an API endpoint
-    // fetch('/api/contact', { method: 'POST', body: JSON.stringify(data), ... })
+        // Store email for later
+        localStorage.setItem('userEmail', data.email);
+        state.userEmail = data.email;
+
+        // Show success message
+        showToast('Merci ! Notre équipe vous contactera sous 24h.');
+
+        // Track GA4 event
+        trackEvent('lead_captured', { method: 'agency_contact', plan: 'agence' });
+
+        // Close modal after 2 seconds
+        setTimeout(() => {
+            closeContactModal();
+            event.target.reset();
+        }, 2000);
+
+    } catch (error) {
+        console.error('Contact form error:', error);
+        showToast('Erreur lors de l\'envoi de la demande');
+    }
 }
 
 /**

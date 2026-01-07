@@ -1002,5 +1002,100 @@ def get_config():
     })
 
 
+# ========================================
+# Email Collection with JSON Storage
+# ========================================
+
+EMAILS_FILE = os.path.join(os.path.dirname(__file__), 'data', 'emails.json')
+
+
+def load_emails():
+    """Charge les emails depuis le fichier JSON"""
+    if os.path.exists(EMAILS_FILE):
+        try:
+            with open(EMAILS_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError):
+            return []
+    return []
+
+
+def save_emails(emails):
+    """Sauvegarde les emails dans le fichier JSON"""
+    # Créer le dossier data si nécessaire
+    os.makedirs(os.path.dirname(EMAILS_FILE), exist_ok=True)
+    with open(EMAILS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(emails, f, ensure_ascii=False, indent=2)
+
+
+@app.route('/api/subscribe', methods=['POST'])
+def subscribe():
+    """Enregistre un email avec le plan choisi dans data/emails.json"""
+    data = request.get_json()
+    email = data.get('email', '').strip().lower()
+    plan = data.get('plan', 'pro')
+    name = data.get('name', '')
+    agency = data.get('agency', '')
+    clients = data.get('clients', '')
+    message = data.get('message', '')
+
+    # Validation de l'email
+    if not email or '@' not in email or '.' not in email:
+        return jsonify({'error': 'Email invalide'}), 400
+
+    # Charger les emails existants
+    emails = load_emails()
+
+    # Vérifier si l'email existe déjà
+    existing = next((e for e in emails if e.get('email') == email), None)
+
+    if existing:
+        # Mettre à jour les informations
+        existing['plan'] = plan
+        existing['updated_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        if name:
+            existing['name'] = name
+        if agency:
+            existing['agency'] = agency
+        if clients:
+            existing['clients'] = clients
+        if message:
+            existing['message'] = message
+    else:
+        # Ajouter un nouvel email
+        new_entry = {
+            'email': email,
+            'date': datetime.now().strftime('%Y-%m-%d'),
+            'plan': plan
+        }
+        if name:
+            new_entry['name'] = name
+        if agency:
+            new_entry['agency'] = agency
+        if clients:
+            new_entry['clients'] = clients
+        if message:
+            new_entry['message'] = message
+        emails.append(new_entry)
+
+    # Sauvegarder
+    save_emails(emails)
+
+    return jsonify({
+        'success': True,
+        'message': 'Email enregistré avec succès'
+    })
+
+
+@app.route('/api/admin/emails', methods=['GET'])
+def get_all_emails():
+    """Retourne la liste de tous les emails collectés"""
+    emails = load_emails()
+    return jsonify({
+        'count': len(emails),
+        'emails': emails
+    })
+
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
