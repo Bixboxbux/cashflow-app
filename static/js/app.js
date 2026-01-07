@@ -8,7 +8,10 @@ const state = {
     analysisCount: parseInt(localStorage.getItem('analysisCount') || '0'),
     maxFreeAnalyses: 3,
     currentResults: null,
-    isAnalyzing: false
+    isAnalyzing: false,
+    isPro: localStorage.getItem('isPro') === 'true',
+    exitIntentShown: sessionStorage.getItem('exitIntentShown') === 'true',
+    userEmail: localStorage.getItem('userEmail') || ''
 };
 
 // DOM Elements
@@ -27,6 +30,7 @@ const elements = {
     premiumFeatures: () => document.getElementById('premium-features'),
     pricingModal: () => document.getElementById('pricing-modal'),
     contactModal: () => document.getElementById('contact-modal'),
+    exitPopup: () => document.getElementById('exit-popup'),
     toast: () => document.getElementById('toast'),
     toastMessage: () => document.getElementById('toast-message')
 };
@@ -42,9 +46,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Check remaining free analyses
     updateFreeAnalysesUI();
-    
+
     // Create contact modal if it doesn't exist
     createContactModal();
+
+    // Initialize exit intent detection
+    initExitIntent();
+
+    // Check Pro status if email is stored
+    if (state.userEmail) {
+        checkProStatus(state.userEmail);
+    }
+
+    // Update UI if user is Pro
+    if (state.isPro) {
+        updateProUI();
+    }
 });
 
 /**
@@ -562,18 +579,45 @@ function closePricingModal() {
 }
 
 /**
- * Handle payment form submission (simulated)
+ * Handle payment form submission - Redirect to Stripe Checkout
  */
-function handlePayment(event) {
+async function handlePayment(event) {
     event.preventDefault();
     const email = event.target.querySelector('input').value;
 
-    // Simulate payment processing
-    showToast('Merci ! Vous allez recevoir un email de confirmation.');
-    closePricingModal();
+    // Track GA4 event
+    trackEvent('begin_checkout', {
+        currency: 'EUR',
+        value: 29.00,
+        items: [{ item_name: 'WebAudit Pro', price: 29.00 }]
+    });
 
-    // In a real app, this would redirect to Stripe/payment processor
-    console.log('Payment initiated for:', email);
+    try {
+        const response = await fetch('/create-checkout-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+            showToast('Erreur: ' + data.error);
+            return;
+        }
+
+        // Store email for later
+        localStorage.setItem('userEmail', email);
+        state.userEmail = email;
+
+        // Redirect to Stripe Checkout
+        if (data.url) {
+            window.location.href = data.url;
+        }
+    } catch (error) {
+        console.error('Checkout error:', error);
+        showToast('Erreur lors de la redirection vers le paiement');
+    }
 }
 
 /**
@@ -643,5 +687,214 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         closePricingModal();
         closeContactModal();
+        closeExitPopup();
     }
 });
+
+// ========================================
+// Exit Intent Popup
+// ========================================
+
+/**
+ * Initialize exit intent detection
+ */
+function initExitIntent() {
+    // Only show if not already shown and user is not Pro
+    if (state.exitIntentShown || state.isPro) return;
+
+    // Detect mouse leaving viewport (desktop)
+    document.addEventListener('mouseout', (e) => {
+        if (e.clientY < 10 && !state.exitIntentShown) {
+            showExitPopup();
+        }
+    });
+
+    // Detect back button or tab close attempt (mobile fallback)
+    let scrollPos = 0;
+    window.addEventListener('scroll', () => {
+        const currentScroll = window.pageYOffset;
+        // If user scrolls up significantly after scrolling down
+        if (scrollPos > 500 && currentScroll < scrollPos - 200 && !state.exitIntentShown) {
+            // Only trigger after some engagement
+            if (state.currentResults) {
+                showExitPopup();
+            }
+        }
+        scrollPos = currentScroll;
+    });
+}
+
+/**
+ * Show exit intent popup
+ */
+function showExitPopup() {
+    if (state.exitIntentShown || state.isPro) return;
+
+    const popup = elements.exitPopup();
+    if (popup) {
+        popup.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        state.exitIntentShown = true;
+        sessionStorage.setItem('exitIntentShown', 'true');
+
+        // Track GA4 event
+        trackEvent('exit_intent_shown');
+    }
+}
+
+/**
+ * Close exit intent popup
+ */
+function closeExitPopup() {
+    const popup = elements.exitPopup();
+    if (popup) {
+        popup.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+/**
+ * Handle exit intent form submission
+ */
+async function handleExitIntent(event) {
+    event.preventDefault();
+
+    const email = document.getElementById('exit-email').value.trim();
+    if (!email) return;
+
+    try {
+        const response = await fetch('/api/subscribe-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email,
+                source: 'exit_intent',
+                audit_url: state.currentResults?.url || ''
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('Merci ! Vous recevrez votre rapport par email.');
+            closeExitPopup();
+
+            // Track GA4 event
+            trackEvent('lead_captured', { method: 'exit_intent' });
+
+            // Store email
+            localStorage.setItem('userEmail', email);
+            state.userEmail = email;
+        } else {
+            showToast(data.error || 'Erreur lors de l\'inscription');
+        }
+    } catch (error) {
+        console.error('Subscribe error:', error);
+        showToast('Erreur lors de l\'inscription');
+    }
+}
+
+// ========================================
+// Pro Status & Unlimited Audits
+// ========================================
+
+/**
+ * Check if user is a Pro subscriber
+ */
+async function checkProStatus(email) {
+    try {
+        const response = await fetch('/api/check-pro', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+
+        const data = await response.json();
+
+        if (data.is_pro) {
+            state.isPro = true;
+            localStorage.setItem('isPro', 'true');
+            updateProUI();
+        }
+    } catch (error) {
+        console.error('Pro check error:', error);
+    }
+}
+
+/**
+ * Update UI for Pro users
+ */
+function updateProUI() {
+    // Remove analysis limit
+    state.maxFreeAnalyses = Infinity;
+
+    // Update the hint text
+    const hint = document.querySelector('.form-hint');
+    if (hint) {
+        hint.innerHTML = `
+            <span class="free-badge" style="background: var(--primary);">PRO</span>
+            Audits illimités
+        `;
+    }
+
+    // Hide upsell elements
+    const upsellElements = document.querySelectorAll('.premium-upsell, .upsell-cta');
+    upsellElements.forEach(el => el.style.display = 'none');
+}
+
+// ========================================
+// Google Analytics 4 Tracking
+// ========================================
+
+/**
+ * Track custom GA4 event
+ */
+function trackEvent(eventName, params = {}) {
+    if (typeof gtag !== 'undefined') {
+        gtag('event', eventName, params);
+    }
+    console.log('GA4 Event:', eventName, params);
+}
+
+/**
+ * Track pricing button clicks
+ */
+function trackPricingClick(plan) {
+    trackEvent('select_plan', {
+        plan_name: plan,
+        plan_value: plan === 'pro' ? 29 : plan === 'agency' ? 99 : 0
+    });
+}
+
+// Override showPricingModal to add tracking
+const originalShowPricingModal = showPricingModal;
+showPricingModal = function() {
+    trackPricingClick('pro');
+    originalShowPricingModal();
+};
+
+// Override contactSales to add tracking
+const originalContactSales = contactSales;
+contactSales = function() {
+    trackPricingClick('agency');
+    originalContactSales();
+};
+
+// Override analyzeWebsite to add tracking
+const originalAnalyzeWebsite = analyzeWebsite;
+analyzeWebsite = async function() {
+    const url = elements.urlInput().value.trim();
+    if (url) {
+        trackEvent('audit_started', { audit_url: url });
+    }
+    await originalAnalyzeWebsite();
+
+    // Track completion if successful
+    if (state.currentResults && !state.currentResults.error) {
+        trackEvent('audit_completed', {
+            audit_url: state.currentResults.url,
+            score: state.currentResults.global_score,
+            grade: state.currentResults.grade
+        });
+    }
+};

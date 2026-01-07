@@ -3,7 +3,7 @@ WebAudit Pro - Website Audit Tool for Conversion & SEO
 A micro-SaaS MVP for automated website analysis
 """
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect
 from flask_cors import CORS
 import requests
 from bs4 import BeautifulSoup
@@ -12,6 +12,9 @@ import re
 import time
 import json
 import random
+import sqlite3
+import os
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
@@ -21,6 +24,94 @@ FREE_TIER_LIMIT = 3  # Analyses gratuites par session
 TIMEOUT_CONNECT = 5   # Timeout de connexion (secondes)
 TIMEOUT_READ = 15     # Timeout de lecture (secondes)
 MAX_RETRIES = 2       # Nombre de tentatives en cas d'échec
+
+# Stripe Configuration (à remplacer par vos vraies clés)
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', 'sk_test_XXXXXX')
+STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', 'pk_test_XXXXXX')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', 'whsec_XXXXXX')
+STRIPE_PRICE_ID = os.environ.get('STRIPE_PRICE_ID', 'price_XXXXXX')  # ID du prix Pro à 29€/mois
+
+# Base URL pour les redirections Stripe
+BASE_URL = os.environ.get('BASE_URL', 'http://localhost:5000')
+
+# Database path
+DB_PATH = os.path.join(os.path.dirname(__file__), 'webaudit.db')
+
+
+# ========================================
+# Database Setup
+# ========================================
+
+def init_db():
+    """Initialise la base de données SQLite"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    # Table des leads (emails collectés via exit-intent)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS leads (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT UNIQUE NOT NULL,
+            source TEXT DEFAULT 'exit_intent',
+            audit_url TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
+    # Table des abonnés Pro (après paiement Stripe)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS subscribers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT UNIQUE NOT NULL,
+            stripe_customer_id TEXT,
+            stripe_subscription_id TEXT,
+            plan TEXT DEFAULT 'pro',
+            status TEXT DEFAULT 'active',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
+    # Table des demandes de contact Agence
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS agency_contacts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            email TEXT NOT NULL,
+            agency TEXT,
+            clients TEXT,
+            message TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
+    conn.commit()
+    conn.close()
+
+# Initialiser la DB au démarrage
+init_db()
+
+
+def get_db():
+    """Retourne une connexion à la base de données"""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def is_pro_user(email):
+    """Vérifie si un utilisateur est abonné Pro"""
+    if not email:
+        return False
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        'SELECT * FROM subscribers WHERE email = ? AND status = ?',
+        (email.lower(), 'active')
+    )
+    result = cursor.fetchone()
+    conn.close()
+    return result is not None
 
 # Pool de User-Agents réalistes (navigateurs modernes)
 USER_AGENTS = [
@@ -702,6 +793,213 @@ def generate_text_report(results):
     report.append("=" * 60)
 
     return "\n".join(report)
+
+
+# ========================================
+# Stripe Checkout Endpoints
+# ========================================
+
+@app.route('/create-checkout-session', methods=['POST'])
+def create_checkout_session():
+    """Crée une session Stripe Checkout pour le plan Pro"""
+    try:
+        import stripe
+        stripe.api_key = STRIPE_SECRET_KEY
+
+        data = request.get_json() or {}
+        email = data.get('email', '')
+
+        # Créer la session Checkout
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price': STRIPE_PRICE_ID,
+                'quantity': 1,
+            }],
+            mode='subscription',
+            success_url=BASE_URL + '/success?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url=BASE_URL + '/#pricing',
+            customer_email=email if email else None,
+            metadata={
+                'plan': 'pro'
+            }
+        )
+
+        return jsonify({'url': checkout_session.url})
+
+    except ImportError:
+        # Stripe non installé - mode simulation
+        return jsonify({
+            'url': BASE_URL + '/success?session_id=simulated_session',
+            'simulated': True
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+
+@app.route('/success')
+def checkout_success():
+    """Page de succès après paiement Stripe"""
+    session_id = request.args.get('session_id')
+
+    # En production, vérifier la session avec Stripe
+    # et activer l'abonnement dans la base de données
+
+    return render_template('success.html', session_id=session_id)
+
+
+@app.route('/webhook', methods=['POST'])
+def stripe_webhook():
+    """Webhook Stripe pour gérer les événements de paiement"""
+    payload = request.get_data(as_text=True)
+    sig_header = request.headers.get('Stripe-Signature')
+
+    try:
+        import stripe
+        stripe.api_key = STRIPE_SECRET_KEY
+
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, STRIPE_WEBHOOK_SECRET
+        )
+
+        # Gérer les différents types d'événements
+        if event['type'] == 'checkout.session.completed':
+            session = event['data']['object']
+            handle_checkout_completed(session)
+
+        elif event['type'] == 'customer.subscription.deleted':
+            subscription = event['data']['object']
+            handle_subscription_cancelled(subscription)
+
+        return jsonify({'status': 'success'})
+
+    except ImportError:
+        return jsonify({'status': 'stripe not installed'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+
+def handle_checkout_completed(session):
+    """Traite un paiement réussi"""
+    email = session.get('customer_email') or session.get('customer_details', {}).get('email')
+    customer_id = session.get('customer')
+    subscription_id = session.get('subscription')
+
+    if email:
+        conn = get_db()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('''
+                INSERT INTO subscribers (email, stripe_customer_id, stripe_subscription_id, plan, status)
+                VALUES (?, ?, ?, 'pro', 'active')
+                ON CONFLICT(email) DO UPDATE SET
+                    stripe_customer_id = ?,
+                    stripe_subscription_id = ?,
+                    status = 'active',
+                    updated_at = CURRENT_TIMESTAMP
+            ''', (email.lower(), customer_id, subscription_id, customer_id, subscription_id))
+            conn.commit()
+        finally:
+            conn.close()
+
+
+def handle_subscription_cancelled(subscription):
+    """Traite une annulation d'abonnement"""
+    subscription_id = subscription.get('id')
+
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute('''
+            UPDATE subscribers SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP
+            WHERE stripe_subscription_id = ?
+        ''', (subscription_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+# ========================================
+# Email Collection Endpoints
+# ========================================
+
+@app.route('/api/subscribe-email', methods=['POST'])
+def subscribe_email():
+    """Enregistre un email (exit-intent popup)"""
+    data = request.get_json()
+    email = data.get('email', '').strip().lower()
+    source = data.get('source', 'exit_intent')
+    audit_url = data.get('audit_url', '')
+
+    if not email or '@' not in email:
+        return jsonify({'error': 'Email invalide'}), 400
+
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute('''
+            INSERT INTO leads (email, source, audit_url)
+            VALUES (?, ?, ?)
+            ON CONFLICT(email) DO UPDATE SET
+                audit_url = COALESCE(?, audit_url),
+                created_at = created_at
+        ''', (email, source, audit_url, audit_url))
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Email enregistré'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/contact-agency', methods=['POST'])
+def contact_agency():
+    """Enregistre une demande de contact Agence"""
+    data = request.get_json()
+
+    name = data.get('name', '').strip()
+    email = data.get('email', '').strip().lower()
+    agency = data.get('agency', '').strip()
+    clients = data.get('clients', '')
+    message = data.get('message', '')
+
+    if not name or not email:
+        return jsonify({'error': 'Nom et email requis'}), 400
+
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute('''
+            INSERT INTO agency_contacts (name, email, agency, clients, message)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (name, email, agency, clients, message))
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Demande enregistrée'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/check-pro', methods=['POST'])
+def check_pro_status():
+    """Vérifie si un utilisateur est abonné Pro"""
+    data = request.get_json()
+    email = data.get('email', '').strip().lower()
+
+    if not email:
+        return jsonify({'is_pro': False})
+
+    return jsonify({'is_pro': is_pro_user(email)})
+
+
+@app.route('/api/config')
+def get_config():
+    """Retourne la configuration publique (clé Stripe publishable)"""
+    return jsonify({
+        'stripe_publishable_key': STRIPE_PUBLISHABLE_KEY,
+        'ga_measurement_id': 'G-XXXXXX'  # À remplacer par votre ID GA4
+    })
 
 
 if __name__ == '__main__':

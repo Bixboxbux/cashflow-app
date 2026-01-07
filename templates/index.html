@@ -9,6 +9,28 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=GTM-XXXXXX"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'GTM-XXXXXX', {
+            'page_title': 'WebAudit Pro - Accueil',
+            'custom_map': {
+                'dimension1': 'user_type',
+                'dimension2': 'audit_url'
+            }
+        });
+
+        // Track custom events
+        function trackEvent(eventName, params = {}) {
+            if (typeof gtag !== 'undefined') {
+                gtag('event', eventName, params);
+            }
+        }
+    </script>
 </head>
 <body>
     <!-- Header -->
@@ -429,6 +451,29 @@
                     📞 Réponse sous 24h • Démo gratuite incluse
                 </p>
             </div>
+        </div>
+    </div>
+
+    <!-- Exit Intent Popup -->
+    <div class="exit-popup" id="exit-popup">
+        <div class="exit-popup-backdrop" onclick="closeExitPopup()"></div>
+        <div class="exit-popup-content">
+            <button class="exit-popup-close" onclick="closeExitPopup()">&times;</button>
+            <div class="exit-popup-icon">📧</div>
+            <h2>Attendez !</h2>
+            <p>Recevez votre <strong>audit complet en PDF</strong> directement par email.</p>
+            <div class="exit-popup-benefits">
+                <span>✓ Rapport détaillé</span>
+                <span>✓ Recommandations personnalisées</span>
+                <span>✓ 100% Gratuit</span>
+            </div>
+            <form class="exit-popup-form" onsubmit="handleExitIntent(event)">
+                <input type="email" id="exit-email" placeholder="Votre email" required>
+                <button type="submit" class="btn btn-primary btn-full">
+                    Recevoir mon rapport PDF
+                </button>
+            </form>
+            <p class="exit-popup-hint">Pas de spam. Désabonnement en 1 clic.</p>
         </div>
     </div>
 

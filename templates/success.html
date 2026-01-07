@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienvenue dans WebAudit Pro !</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .success-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gradient-hero);
+            padding: 40px 20px;
+        }
+        .success-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 48px;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: var(--shadow-xl);
+        }
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 40px;
+        }
+        .success-card h1 {
+            font-size: 28px;
+            margin-bottom: 16px;
+            color: var(--gray-900);
+        }
+        .success-card p {
+            color: var(--gray-600);
+            margin-bottom: 24px;
+        }
+        .success-features {
+            text-align: left;
+            background: var(--gray-50);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .success-features li {
+            padding: 8px 0;
+            color: var(--gray-700);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .success-features li::before {
+            content: "✓";
+            color: #10B981;
+            font-weight: bold;
+        }
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: var(--primary);
+            animation: confetti-fall 3s ease-out forwards;
+        }
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="success-page">
+        <div class="success-card">
+            <div class="success-icon">✓</div>
+            <h1>Bienvenue dans WebAudit Pro !</h1>
+            <p>Votre abonnement est maintenant actif. Vous avez accès à toutes les fonctionnalités premium.</p>
+
+            <ul class="success-features">
+                <li>Audits illimités</li>
+                <li>Analyse des backlinks</li>
+                <li>Benchmark concurrentiel</li>
+                <li>Historique 12 mois</li>
+                <li>Export PDF illimité</li>
+                <li>Support prioritaire</li>
+            </ul>
+
+            <a href="/" class="btn btn-primary btn-full">
+                Commencer mon premier audit Pro
+            </a>
+
+            <p style="margin-top: 20px; font-size: 13px; color: var(--gray-500);">
+                Un email de confirmation a été envoyé à votre adresse.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Confetti animation
+        function createConfetti() {
+            const colors = ['#4F46E5', '#10B981', '#F59E0B', '#EC4899', '#8B5CF6'];
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                    document.body.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 4000);
+                }, i * 50);
+            }
+        }
+        createConfetti();
+
+        // Store pro status in localStorage
+        localStorage.setItem('isPro', 'true');
+        localStorage.removeItem('analysisCount');
+
+        // GA4 Event
+        if (typeof gtag !== 'undefined') {
+            gtag('event', 'purchase', {
+                'transaction_id': '{{ session_id }}',
+                'value': 29.00,
+                'currency': 'EUR',
+                'items': [{ 'item_name': 'WebAudit Pro', 'price': 29.00 }]
+            });
+        }
+    </script>
+</body>
+</html>
