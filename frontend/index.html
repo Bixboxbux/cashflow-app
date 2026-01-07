@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SiteAudit Pro - Audit SEO & Conversion Gratuit</title>
+    <meta name="description" content="Analysez gratuitement votre site web : SEO, performance, conversion, mobile. Obtenez des recommandations concrètes pour améliorer vos résultats.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-dark: #4338CA;
+            --primary-light: #818CF8;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB;
+            --gray-400: #9CA3AF;
+            --gray-500: #6B7280;
+            --gray-600: #4B5563;
+            --gray-700: #374151;
+            --gray-800: #1F2937;
+            --gray-900: #111827;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: var(--gray-800);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--gray-600);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .btn-upgrade {
+            background: var(--primary);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .btn-upgrade:hover {
+            background: var(--primary-dark);
+            color: white;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            padding: 4rem 2rem;
+            text-align: center;
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+
+        /* Search Box */
+        .search-container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .search-box {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            padding: 0.5rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .search-box input {
+            flex: 1;
+            border: none;
+            padding: 1rem 1.5rem;
+            font-size: 1.1rem;
+            outline: none;
+            border-radius: 8px;
+        }
+
+        .search-box button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .search-box button:hover {
+            background: var(--primary-dark);
+        }
+
+        .search-box button:disabled {
+            background: var(--gray-400);
+            cursor: not-allowed;
+        }
+
+        .trust-badges {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .trust-badges span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Loading State */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--gray-200);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1.5rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+
+        .loading-step {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--gray-500);
+            font-size: 0.95rem;
+        }
+
+        .loading-step.active {
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .loading-step.done {
+            color: var(--success);
+        }
+
+        /* Results */
+        .results {
+            display: none;
+        }
+
+        .results.active {
+            display: block;
+        }
+
+        /* Score Card */
+        .score-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .score-circle {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            position: relative;
+        }
+
+        .score-circle::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            padding: 6px;
+            background: conic-gradient(var(--score-color) calc(var(--score) * 3.6deg), var(--gray-200) 0);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+        }
+
+        .score-value {
+            font-size: 2.5rem;
+            line-height: 1;
+        }
+
+        .score-label {
+            font-size: 0.9rem;
+            color: var(--gray-500);
+            font-weight: 500;
+        }
+
+        .score-grade {
+            font-size: 3rem;
+            font-weight: 800;
+            padding: 0.5rem 1.5rem;
+            border-radius: 12px;
+        }
+
+        .grade-A { background: #D1FAE5; color: #065F46; }
+        .grade-B { background: #FEF3C7; color: #92400E; }
+        .grade-C { background: #FED7AA; color: #9A3412; }
+        .grade-D, .grade-F { background: #FEE2E2; color: #991B1B; }
+
+        .score-summary h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .score-summary p {
+            color: var(--gray-600);
+        }
+
+        .score-url {
+            font-size: 0.9rem;
+            color: var(--primary);
+            word-break: break-all;
+        }
+
+        /* Category Scores */
+        .category-scores {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .category-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .category-name {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .category-score {
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .score-bar {
+            height: 8px;
+            background: var(--gray-200);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease-out;
+        }
+
+        /* Recommendations */
+        .recommendations {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .issue-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .issue-item {
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.25rem;
+            transition: border-color 0.2s;
+        }
+
+        .issue-item:hover {
+            border-color: var(--gray-300);
+        }
+
+        .issue-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .issue-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            flex-shrink: 0;
+        }
+
+        .badge-critical {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .badge-warning {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .badge-info {
+            background: #DBEAFE;
+            color: #1E40AF;
+        }
+
+        .issue-content {
+            flex: 1;
+        }
+
+        .issue-message {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .issue-recommendation {
+            color: var(--gray-600);
+            font-size: 0.95rem;
+        }
+
+        .issue-category {
+            font-size: 0.8rem;
+            color: var(--gray-400);
+            text-transform: uppercase;
+            margin-top: 0.5rem;
+        }
+
+        /* Paywall */
+        .paywall-section {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .paywall-content {
+            filter: blur(5px);
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .paywall-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.95) 30%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .paywall-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 500px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            border: 2px solid var(--primary);
+        }
+
+        .paywall-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .paywall-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .paywall-description {
+            color: var(--gray-600);
+            margin-bottom: 1.5rem;
+        }
+
+        .paywall-features {
+            text-align: left;
+            margin-bottom: 1.5rem;
+        }
+
+        .paywall-feature {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0;
+            color: var(--gray-700);
+        }
+
+        .paywall-feature svg {
+            color: var(--success);
+            flex-shrink: 0;
+        }
+
+        .paywall-price {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .paywall-price-note {
+            font-size: 0.9rem;
+            color: var(--gray-500);
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--gray-600);
+            border: none;
+            padding: 0.75rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+
+        /* Detailed Analysis */
+        .detailed-analysis {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .analysis-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            padding-bottom: 1rem;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.25rem;
+            border: none;
+            background: transparent;
+            color: var(--gray-600);
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            background: var(--gray-100);
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .success-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .success-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--success);
+            font-weight: 500;
+        }
+
+        /* Report Actions */
+        .report-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .btn-outline {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            padding: 0.75rem 1.5rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--gray-900);
+            color: white;
+            padding: 3rem 2rem;
+            margin-top: 4rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+        }
+
+        .footer-brand {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+        }
+
+        .footer-brand span {
+            color: var(--primary-light);
+        }
+
+        .footer-description {
+            color: var(--gray-400);
+            font-size: 0.9rem;
+        }
+
+        .footer-title {
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-links a {
+            color: var(--gray-400);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            max-width: 1200px;
+            margin: 2rem auto 0;
+            padding-top: 2rem;
+            border-top: 1px solid var(--gray-700);
+            text-align: center;
+            color: var(--gray-500);
+            font-size: 0.9rem;
+        }
+
+        /* Error State */
+        .error-message {
+            display: none;
+            background: #FEE2E2;
+            border: 1px solid #FECACA;
+            color: #991B1B;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-links {
+                gap: 1rem;
+            }
+
+            .hero h1 {
+                font-size: 1.75rem;
+            }
+
+            .search-box {
+                flex-direction: column;
+            }
+
+            .search-box button {
+                justify-content: center;
+            }
+
+            .score-card {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .score-circle {
+                margin: 0 auto;
+            }
+
+            .trust-badges {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .report-actions {
+                flex-direction: column;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .results.active {
+            animation: fadeIn 0.5s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <a href="/" class="logo">Site<span>Audit</span>Pro</a>
+            <nav class="nav-links">
+                <a href="#features">Fonctionnalités</a>
+                <a href="#pricing">Tarifs</a>
+                <a href="#" class="btn-upgrade" onclick="showPricingModal()">Passer Pro</a>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero">
+        <h1>Analysez votre site en 30 secondes</h1>
+        <p>Obtenez un audit SEO & conversion complet avec des recommandations concrètes pour booster vos résultats.</p>
+
+        <div class="search-container">
+            <form class="search-box" id="auditForm">
+                <input type="text" id="urlInput" placeholder="Entrez l'URL de votre site (ex: monsite.com)" required>
+                <button type="submit" id="submitBtn">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    Analyser
+                </button>
+            </form>
+        </div>
+
+        <div class="trust-badges">
+            <span>
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                100% Gratuit
+            </span>
+            <span>
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                +10 000 sites analysés
+            </span>
+            <span>
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                Sans inscription
+            </span>
+        </div>
+    </section>
+
+    <main class="main-content">
+        <!-- Error Message -->
+        <div class="error-message" id="errorMessage"></div>
+
+        <!-- Loading State -->
+        <div class="loading" id="loadingState">
+            <div class="spinner"></div>
+            <h3 style="margin-bottom: 1.5rem;">Analyse en cours...</h3>
+            <div class="loading-steps">
+                <div class="loading-step" id="step1">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="3"/></svg>
+                    Connexion au site
+                </div>
+                <div class="loading-step" id="step2">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="3"/></svg>
+                    Analyse SEO
+                </div>
+                <div class="loading-step" id="step3">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="3"/></svg>
+                    Analyse performance
+                </div>
+                <div class="loading-step" id="step4">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="3"/></svg>
+                    Analyse conversion
+                </div>
+                <div class="loading-step" id="step5">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="3"/></svg>
+                    Génération du rapport
+                </div>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div class="results" id="resultsSection">
+            <!-- Score Card -->
+            <div class="score-card">
+                <div class="score-circle" id="scoreCircle">
+                    <span class="score-value" id="scoreValue">0</span>
+                    <span class="score-label">/ 100</span>
+                </div>
+                <div class="score-summary">
+                    <h2 id="scoreSummary">Analyse terminée</h2>
+                    <p id="scoreDescription">Votre site a un potentiel d'amélioration.</p>
+                    <p class="score-url" id="analyzedUrl"></p>
+                </div>
+                <div class="score-grade" id="scoreGrade">B</div>
+            </div>
+
+            <!-- Category Scores -->
+            <div class="category-scores" id="categoryScores">
+                <!-- Generated by JS -->
+            </div>
+
+            <!-- Priority Recommendations (Free) -->
+            <div class="recommendations">
+                <div class="section-header">
+                    <h3 class="section-title">Recommandations prioritaires</h3>
+                    <span style="color: var(--gray-500); font-size: 0.9rem;">3 sur <span id="totalIssues">10</span> affichées</span>
+                </div>
+                <div class="issue-list" id="freeRecommendations">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+
+            <!-- Paywall Section -->
+            <div class="paywall-section" id="paywallSection">
+                <div class="paywall-content">
+                    <div class="recommendations">
+                        <h3 class="section-title">Toutes les recommandations</h3>
+                        <div class="issue-list">
+                            <div class="issue-item">
+                                <div class="issue-header">
+                                    <span class="issue-badge badge-critical">Critique</span>
+                                    <div class="issue-content">
+                                        <p class="issue-message">Recommandation premium cachée</p>
+                                        <p class="issue-recommendation">Cette recommandation vous permettrait d'améliorer...</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="issue-item">
+                                <div class="issue-header">
+                                    <span class="issue-badge badge-warning">Important</span>
+                                    <div class="issue-content">
+                                        <p class="issue-message">Autre recommandation premium</p>
+                                        <p class="issue-recommendation">Optimisation détaillée pour votre site...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="paywall-overlay">
+                    <div class="paywall-card">
+                        <div class="paywall-icon">🚀</div>
+                        <h3 class="paywall-title">Débloquez le rapport complet</h3>
+                        <p class="paywall-description">Accédez à toutes les recommandations et boostez votre site</p>
+                        <div class="paywall-features">
+                            <div class="paywall-feature">
+                                <svg width="20" height="20" fill="none" stroke="#10B981" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                <span>Toutes les recommandations détaillées</span>
+                            </div>
+                            <div class="paywall-feature">
+                                <svg width="20" height="20" fill="none" stroke="#10B981" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                <span>Export PDF du rapport</span>
+                            </div>
+                            <div class="paywall-feature">
+                                <svg width="20" height="20" fill="none" stroke="#10B981" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                <span>Audit de 10 pages internes</span>
+                            </div>
+                            <div class="paywall-feature">
+                                <svg width="20" height="20" fill="none" stroke="#10B981" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                <span>Suivi des améliorations</span>
+                            </div>
+                            <div class="paywall-feature">
+                                <svg width="20" height="20" fill="none" stroke="#10B981" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                <span>Audit illimité pendant 1 mois</span>
+                            </div>
+                        </div>
+                        <p class="paywall-price">29€ <span style="font-size: 1rem; font-weight: 400;">/ mois</span></p>
+                        <p class="paywall-price-note">ou 199€/an (économisez 40%)</p>
+                        <button class="btn-primary" onclick="showPricingModal()">Passer à Pro</button>
+                        <button class="btn-secondary" onclick="hidePaywall()">Continuer avec la version gratuite</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Analysis (Free Preview) -->
+            <div class="detailed-analysis">
+                <div class="section-header">
+                    <h3 class="section-title">Analyse détaillée</h3>
+                </div>
+                <div class="analysis-tabs">
+                    <button class="tab-btn active" data-tab="seo">SEO</button>
+                    <button class="tab-btn" data-tab="performance">Performance</button>
+                    <button class="tab-btn" data-tab="conversion">Conversion</button>
+                    <button class="tab-btn" data-tab="mobile">Mobile</button>
+                    <button class="tab-btn" data-tab="security">Sécurité</button>
+                </div>
+
+                <div class="tab-content active" id="tab-seo">
+                    <div class="success-list" id="seo-successes"></div>
+                    <div class="issue-list" id="seo-issues"></div>
+                </div>
+                <div class="tab-content" id="tab-performance">
+                    <div class="success-list" id="performance-successes"></div>
+                    <div class="issue-list" id="performance-issues"></div>
+                </div>
+                <div class="tab-content" id="tab-conversion">
+                    <div class="success-list" id="conversion-successes"></div>
+                    <div class="issue-list" id="conversion-issues"></div>
+                </div>
+                <div class="tab-content" id="tab-mobile">
+                    <div class="success-list" id="mobile-successes"></div>
+                    <div class="issue-list" id="mobile-issues"></div>
+                </div>
+                <div class="tab-content" id="tab-security">
+                    <div class="success-list" id="security-successes"></div>
+                    <div class="issue-list" id="security-issues"></div>
+                </div>
+            </div>
+
+            <!-- Report Actions -->
+            <div class="report-actions">
+                <button class="btn-outline" onclick="copyReport()">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                    Copier le rapport
+                </button>
+                <button class="btn-outline" onclick="newAudit()">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    Nouvel audit
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Pricing Modal -->
+    <div id="pricingModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 20px; padding: 2.5rem; max-width: 900px; width: 90%; max-height: 90vh; overflow-y: auto;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h2 style="font-size: 2rem; margin-bottom: 0.5rem;">Choisissez votre plan</h2>
+                <p style="color: var(--gray-600);">Boostez votre site avec des analyses approfondies</p>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                <!-- Free -->
+                <div style="border: 2px solid var(--gray-200); border-radius: 16px; padding: 1.5rem;">
+                    <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Gratuit</h3>
+                    <p style="font-size: 2rem; font-weight: 800; margin-bottom: 1rem;">0€</p>
+                    <ul style="list-style: none; margin-bottom: 1.5rem; color: var(--gray-600);">
+                        <li style="padding: 0.5rem 0;">✓ 3 audits / jour</li>
+                        <li style="padding: 0.5rem 0;">✓ Score global</li>
+                        <li style="padding: 0.5rem 0;">✓ 3 recommandations</li>
+                        <li style="padding: 0.5rem 0; color: var(--gray-400);">✗ Export PDF</li>
+                        <li style="padding: 0.5rem 0; color: var(--gray-400);">✗ Pages internes</li>
+                    </ul>
+                    <button style="width: 100%; padding: 0.75rem; border: 2px solid var(--gray-300); background: transparent; border-radius: 8px; font-weight: 600; cursor: pointer;">Plan actuel</button>
+                </div>
+                <!-- Pro -->
+                <div style="border: 2px solid var(--primary); border-radius: 16px; padding: 1.5rem; position: relative; background: linear-gradient(to bottom, #EEF2FF, white);">
+                    <span style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--primary); color: white; padding: 0.25rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">POPULAIRE</span>
+                    <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Pro</h3>
+                    <p style="font-size: 2rem; font-weight: 800; margin-bottom: 0.25rem;">29€<span style="font-size: 1rem; font-weight: 400;">/mois</span></p>
+                    <p style="font-size: 0.85rem; color: var(--gray-500); margin-bottom: 1rem;">ou 199€/an</p>
+                    <ul style="list-style: none; margin-bottom: 1.5rem;">
+                        <li style="padding: 0.5rem 0;">✓ Audits illimités</li>
+                        <li style="padding: 0.5rem 0;">✓ Toutes les recommandations</li>
+                        <li style="padding: 0.5rem 0;">✓ Export PDF</li>
+                        <li style="padding: 0.5rem 0;">✓ 10 pages par audit</li>
+                        <li style="padding: 0.5rem 0;">✓ Suivi historique</li>
+                    </ul>
+                    <button class="btn-primary" onclick="alert('Intégration Stripe à venir!')">Commencer l'essai gratuit</button>
+                </div>
+                <!-- Agency -->
+                <div style="border: 2px solid var(--gray-200); border-radius: 16px; padding: 1.5rem;">
+                    <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Agence</h3>
+                    <p style="font-size: 2rem; font-weight: 800; margin-bottom: 0.25rem;">99€<span style="font-size: 1rem; font-weight: 400;">/mois</span></p>
+                    <p style="font-size: 0.85rem; color: var(--gray-500); margin-bottom: 1rem;">ou 799€/an</p>
+                    <ul style="list-style: none; margin-bottom: 1.5rem;">
+                        <li style="padding: 0.5rem 0;">✓ Tout Pro +</li>
+                        <li style="padding: 0.5rem 0;">✓ White label</li>
+                        <li style="padding: 0.5rem 0;">✓ API access</li>
+                        <li style="padding: 0.5rem 0;">✓ Multi-utilisateurs</li>
+                        <li style="padding: 0.5rem 0;">✓ Support prioritaire</li>
+                    </ul>
+                    <button style="width: 100%; padding: 0.75rem; border: 2px solid var(--primary); background: transparent; color: var(--primary); border-radius: 8px; font-weight: 600; cursor: pointer;" onclick="alert('Contactez-nous: contact@siteauditpro.com')">Contacter</button>
+                </div>
+            </div>
+            <button onclick="closePricingModal()" style="display: block; margin: 2rem auto 0; background: none; border: none; color: var(--gray-500); cursor: pointer; font-size: 0.95rem;">Fermer</button>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div>
+                <div class="footer-brand">Site<span>Audit</span>Pro</div>
+                <p class="footer-description">L'outil d'audit SEO et conversion le plus simple pour les entrepreneurs et PME.</p>
+            </div>
+            <div>
+                <h4 class="footer-title">Produit</h4>
+                <ul class="footer-links">
+                    <li><a href="#">Fonctionnalités</a></li>
+                    <li><a href="#">Tarifs</a></li>
+                    <li><a href="#">API</a></li>
+                    <li><a href="#">Changelog</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="footer-title">Ressources</h4>
+                <ul class="footer-links">
+                    <li><a href="#">Blog</a></li>
+                    <li><a href="#">Guide SEO</a></li>
+                    <li><a href="#">Checklist conversion</a></li>
+                    <li><a href="#">FAQ</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="footer-title">Contact</h4>
+                <ul class="footer-links">
+                    <li><a href="#">Support</a></li>
+                    <li><a href="#">contact@siteauditpro.com</a></li>
+                    <li><a href="#">Twitter</a></li>
+                    <li><a href="#">LinkedIn</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 SiteAuditPro. Tous droits réservés. | <a href="#" style="color: var(--gray-400);">Mentions légales</a> | <a href="#" style="color: var(--gray-400);">Confidentialité</a></p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
