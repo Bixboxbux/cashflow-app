@@ -277,7 +277,7 @@
                         <li>✓ Support dédié</li>
                         <li>✓ Onboarding personnalisé</li>
                     </ul>
-                    <button class="btn btn-outline btn-full" onclick="showPricingModal()">
+                    <button class="btn btn-outline btn-full" onclick="contactSales()">
                         Contacter les ventes
                     </button>
                 </div>
@@ -377,6 +377,56 @@
                 </form>
                 <p class="modal-hint">
                     💳 Aucune carte requise pour l'essai • Annulation en 1 clic
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Sales Modal (Agency Plan) -->
+    <div class="modal" id="contact-modal">
+        <div class="modal-backdrop" onclick="closeContactModal()"></div>
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeContactModal()">&times;</button>
+            <div class="modal-header">
+                <span class="modal-badge">🏢 Plan Agence</span>
+                <h2>Contactez notre équipe commerciale</h2>
+                <p>Obtenez une offre personnalisée pour votre agence</p>
+            </div>
+            <div class="modal-body">
+                <div class="agency-benefits">
+                    <div class="agency-benefit">
+                        <span>✓</span> White-label complet
+                    </div>
+                    <div class="agency-benefit">
+                        <span>✓</span> Support dédié 24/7
+                    </div>
+                    <div class="agency-benefit">
+                        <span>✓</span> Onboarding personnalisé
+                    </div>
+                    <div class="agency-benefit">
+                        <span>✓</span> Tarifs dégressifs
+                    </div>
+                </div>
+                <form class="modal-form contact-form" onsubmit="handleContactForm(event)">
+                    <div class="form-row">
+                        <input type="text" name="name" placeholder="Votre nom *" required>
+                        <input type="email" name="email" placeholder="Email professionnel *" required>
+                    </div>
+                    <input type="text" name="agency" placeholder="Nom de votre agence *" required>
+                    <select name="clients" required>
+                        <option value="" disabled selected>Nombre de clients *</option>
+                        <option value="1-10">1 - 10 clients</option>
+                        <option value="11-25">11 - 25 clients</option>
+                        <option value="26-50">26 - 50 clients</option>
+                        <option value="50+">Plus de 50 clients</option>
+                    </select>
+                    <textarea name="message" placeholder="Message (optionnel) - Décrivez vos besoins..." rows="3"></textarea>
+                    <button type="submit" class="btn btn-primary btn-full">
+                        Demander un devis personnalisé
+                    </button>
+                </form>
+                <p class="modal-hint">
+                    📞 Réponse sous 24h • Démo gratuite incluse
                 </p>
             </div>
         </div>

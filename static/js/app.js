@@ -577,6 +577,53 @@ function handlePayment(event) {
 }
 
 /**
+ * Show contact sales modal (Agency plan)
+ */
+function contactSales() {
+    elements.contactModal().classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+/**
+ * Close contact sales modal
+ */
+function closeContactModal() {
+    elements.contactModal().classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+/**
+ * Handle contact form submission (Agency plan)
+ */
+function handleContactForm(event) {
+    event.preventDefault();
+
+    const formData = new FormData(event.target);
+    const data = {
+        name: formData.get('name'),
+        email: formData.get('email'),
+        agency: formData.get('agency'),
+        clients: formData.get('clients'),
+        message: formData.get('message') || ''
+    };
+
+    // Simulate form submission
+    console.log('Contact form submitted:', data);
+
+    // Show success message
+    showToast('Demande envoyée ! Notre équipe vous contactera sous 24h.');
+
+    // Close modal
+    closeContactModal();
+
+    // Reset form
+    event.target.reset();
+
+    // In a real app, this would send data to an API endpoint
+    // fetch('/api/contact', { method: 'POST', body: JSON.stringify(data), ... })
+}
+
+/**
  * Show toast notification
  */
 function showToast(message, duration = 3000) {
