@@ -1,0 +1,109 @@
+{
+  "description": "Exemples de profils pour tester X Profile Analyzer",
+  "profiles": [
+    {
+      "username": "@marie_copywriter",
+      "bio": "Copywriter freelance 🇫🇷 | J'aide les entrepreneurs à créer du contenu qui convertit | Accroches & storytelling | 5 ans d'XP",
+      "tweets": [
+        "Comment écrire une accroche qui capte l'attention en moins de 3 secondes ? Thread 👇",
+        "Je cherche des exemples d'accroches percutantes pour mes clients e-commerce. Des idées ?",
+        "La règle d'or du copywriting : toujours partir du problème de votre client, jamais de votre solution",
+        "En train de bosser sur une landing page pour un nouveau SaaS. Le copy fait toute la différence 🔥",
+        "Astuce : gardez un swipe file de toutes les pubs qui vous font cliquer. C'est votre meilleur prof."
+      ]
+    },
+    {
+      "username": "@julien_growth",
+      "bio": "Growth Marketer | Expert acquisition & conversion | Je booste les ventes des e-commerces 📈 | Formation & consulting",
+      "tweets": [
+        "Mon funnel ne convertit pas assez... Besoin d'optimiser mes emails de relance",
+        "Lancement de ma nouvelle formation sur l'acquisition client la semaine prochaine 🚀",
+        "3 techniques pour doubler votre taux de conversion sans augmenter votre budget pub",
+        "La clé d'un bon marketing ? Des accroches qui arrêtent le scroll. Point final.",
+        "J'ai testé 50 variantes de headlines cette semaine. Résultats dans le thread 👇"
+      ]
+    },
+    {
+      "username": "@sophie_business",
+      "bio": "Entrepreneuse digitale | Coaching business en ligne | Création de produits numériques | Passionnée par le marketing de contenu",
+      "tweets": [
+        "Comment j'ai créé mon premier produit numérique qui me rapporte 5k€/mois",
+        "Je galère à trouver les bons mots pour présenter mon offre... Des conseils ?",
+        "La vente, c'est 80% de psychologie et 20% de technique",
+        "En train de préparer le lancement de ma nouvelle formation sur la vente de produits digitaux",
+        "Astuce : vos meilleurs clients sont ceux qui ont déjà acheté chez vous"
+      ]
+    },
+    {
+      "username": "@alex_ecom",
+      "bio": "Expert e-commerce | Shopify Partner | J'aide les marques DTC à scaler 🚀 | 7 figures de CA généré",
+      "tweets": [
+        "Optimisation de mes pages produits cette semaine. Le copywriting fait la diff entre 2% et 5% de conversion",
+        "Besoin de travailler mes descriptions produits. Quelqu'un a des ressources ?",
+        "Comment augmenter votre panier moyen sans brader vos prix",
+        "Le plus gros problème des e-commerces ? Des accroches plates qui ne vendent pas",
+        "En préparation : un guide complet sur la conversion e-commerce"
+      ]
+    },
+    {
+      "username": "@thomas_dev",
+      "bio": "Développeur Full Stack | React & Node.js | Open source contributor | Tech enthusiast 💻",
+      "tweets": [
+        "Nouveau projet en TypeScript avec Next.js 14, trop cool les Server Components",
+        "Debug session du dimanche... La joie des memory leaks 😅",
+        "Qui utilise Prisma en 2024 ? Je cherche des retours d'expérience",
+        "Code review time ! J'adore voir du code bien écrit",
+        "PSA : Always use TypeScript, your future self will thank you"
+      ]
+    },
+    {
+      "username": "@emma_content",
+      "bio": "Rédactrice web SEO | Créatrice de contenu | J'écris pour capter et convertir | Spécialiste blog & newsletters 📝",
+      "tweets": [
+        "Mon secret pour des intros qui captivent ? Commencer par une question ou une stat choc",
+        "À la recherche d'inspiration pour mes headlines... Vous avez des swipe files ?",
+        "Comment j'optimise chaque article pour le SEO ET la conversion",
+        "Le copywriting, c'est l'art de vendre avec des mots. Et c'est fascinant.",
+        "Nouveau projet client : refonte complète du blog pour améliorer l'engagement"
+      ]
+    },
+    {
+      "username": "@lucas_random",
+      "bio": "Passionné de voyage ✈️ | Photographe amateur 📷 | Pizza lover 🍕",
+      "tweets": [
+        "Superbe coucher de soleil à Bali aujourd'hui 🌅",
+        "Ma recette de pâtes carbonara authentique (la vraie, pas celle avec de la crème)",
+        "Quelqu'un connaît un bon restaurant italien à Paris ?",
+        "Weekend au ski, trop hâte ! ⛷️",
+        "Photo du jour : mon chat qui fait la sieste"
+      ]
+    }
+  ],
+  "recommended_keywords": [
+    "copywriting",
+    "accroche",
+    "conversion",
+    "vente",
+    "marketing",
+    "headline",
+    "swipe file",
+    "funnel",
+    "landing page",
+    "storytelling"
+  ],
+  "expected_results": {
+    "high_relevance": [
+      "@marie_copywriter",
+      "@julien_growth",
+      "@emma_content"
+    ],
+    "medium_relevance": [
+      "@sophie_business",
+      "@alex_ecom"
+    ],
+    "low_relevance": [
+      "@thomas_dev",
+      "@lucas_random"
+    ]
+  }
+}

@@ -1,0 +1,136 @@
+╔═══════════════════════════════════════════════════════════════╗
+║                                                               ║
+║              🎯 X PROFILE ANALYZER                           ║
+║                                                               ║
+║     Outil d'analyse de profils X/Twitter pour identifier     ║
+║     des prospects pertinents (copywriters, marketeurs, etc.)  ║
+║                                                               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+
+📁 CONTENU DU DOSSIER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ app.py                 → Application web (serveur Flask)
+✅ analyzer.py            → Moteur d'analyse sémantique
+✅ README.md              → Documentation complète
+✅ QUICKSTART.md          → Guide de démarrage rapide
+✅ requirements.txt       → Dépendances Python
+✅ start.sh               → Script de lancement (Linux/Mac)
+✅ start.bat              → Script de lancement (Windows)
+✅ test_analyzer.py       → Tests automatiques
+
+📁 templates/
+   └── index.html         → Interface web
+
+📁 data/
+   └── example_profiles.json  → Exemples de profils
+
+📁 exports/               → Dossier pour les exports CSV/JSON
+
+
+🚀 LANCEMENT RAPIDE (3 ÉTAPES)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1️⃣  Installer les dépendances :
+
+    pip install -r requirements.txt
+
+
+2️⃣  Lancer l'application :
+
+    LINUX/MAC :    ./start.sh
+    WINDOWS :      double-cliquez sur start.bat
+    MANUEL :       python app.py
+
+
+3️⃣  Ouvrir le navigateur :
+
+    http://localhost:5000
+
+
+🎯 UTILISATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Cliquez sur "📝 Charger exemple" pour voir un exemple
+
+2. Ou ajoutez vos propres profils :
+   - Copiez la bio depuis X/Twitter
+   - Copiez 5-10 tweets récents
+   - Collez dans l'interface
+
+3. Ajoutez vos mots-clés personnalisés :
+   copywriting, accroche, conversion, marketing, vente
+
+4. Cliquez sur "🚀 ANALYSER LES PROFILS"
+
+5. Consultez les scores et exportez en CSV si besoin
+
+
+📊 INTERPRÉTATION DES SCORES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 70-100  →  TRÈS PERTINENT     (prospect idéal)
+✅ 50-69   →  PERTINENT          (bon prospect)
+⚠️  30-49   →  MOYENNEMENT        (à suivre)
+❌ 0-29    →  PEU PERTINENT      (hors cible)
+
+
+🔧 PERSONNALISATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Le code est open source et modifiable !
+
+→ Modifiez analyzer.py pour :
+  • Ajouter de nouvelles thématiques
+  • Ajuster les pondérations du scoring
+  • Personnaliser les mots-clés
+
+→ Modifiez templates/index.html pour :
+  • Changer l'apparence de l'interface
+  • Ajouter des fonctionnalités
+
+
+✅ IMPORTANT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Usage personnel uniquement
+✅ Pas de scraping automatique
+✅ Données traitées localement
+✅ Aucune donnée envoyée sur internet
+✅ Conforme aux conditions d'utilisation de X/Twitter
+
+
+📚 DOCUMENTATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📖 Documentation complète : README.md
+🚀 Guide rapide :            QUICKSTART.md
+🔍 Tester l'analyseur :      python test_analyzer.py
+
+
+❓ AIDE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problème de port 5000 déjà utilisé ?
+→ Modifiez la dernière ligne de app.py :
+  app.run(debug=True, host='0.0.0.0', port=5001)
+
+Erreur "Module Flask not found" ?
+→ Installez Flask :
+  pip install Flask
+
+L'interface ne s'affiche pas ?
+→ Vérifiez que le serveur est lancé
+→ Essayez http://127.0.0.1:5000
+
+
+🎉 BON USAGE !
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Identifiez facilement les profils pertinents et développez
+votre réseau sur X/Twitter !
+
+
+Version : 1.0.0
+Date : Janvier 2026

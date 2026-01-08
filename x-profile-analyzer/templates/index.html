@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X Profile Analyzer - Outil d'analyse de profils</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #555;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .profile-entry {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: inline-block;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-export {
+            background: #17a2b8;
+        }
+
+        #addProfile {
+            background: #28a745;
+        }
+
+        #analyze {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            font-size: 18px;
+            padding: 15px 35px;
+            display: block;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .results-container {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .results-container.show {
+            display: block;
+        }
+
+        .result-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 5px solid #667eea;
+        }
+
+        .result-item.high-score {
+            border-left-color: #28a745;
+            background: #f0fff4;
+        }
+
+        .result-item.medium-score {
+            border-left-color: #ffc107;
+            background: #fffbf0;
+        }
+
+        .result-item.low-score {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .username {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .score {
+            font-size: 2em;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .result-details {
+            color: #555;
+            line-height: 1.8;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 8px;
+            margin-top: 5px;
+        }
+
+        .badge-theme {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .badge-signal {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .loader {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+
+        .loader.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .export-buttons {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #0d47a1;
+            font-size: 14px;
+        }
+
+        .keyword-input-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .keyword-input-container input {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 X Profile Analyzer</h1>
+            <p class="subtitle">Analysez des profils X/Twitter pour identifier les prospects pertinents</p>
+        </header>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <div class="main-content">
+            <div class="card">
+                <h2>⚙️ Configuration</h2>
+
+                <div class="info-box">
+                    💡 <strong>Astuce :</strong> Ajoutez des mots-clés liés à votre produit (copywriting, marketing, accroches, etc.)
+                </div>
+
+                <div class="form-group">
+                    <label>Mots-clés personnalisés (séparés par des virgules)</label>
+                    <input type="text" id="keywords"
+                           placeholder="copywriting, marketing, conversion, vente">
+                </div>
+
+                <div class="form-group">
+                    <label>Langue</label>
+                    <input type="text" id="language" value="fr" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label>Nombre minimum de tweets</label>
+                    <input type="text" id="minActivity" value="1">
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>👥 Profils à analyser</h2>
+
+                <div class="info-box">
+                    📋 Copiez-collez les bios et tweets depuis X (Twitter) directement ici
+                </div>
+
+                <div id="profilesContainer">
+                    <div class="profile-entry">
+                        <div class="form-group">
+                            <label>Username (ex: @username)</label>
+                            <input type="text" class="profile-username" placeholder="@username">
+                        </div>
+                        <div class="form-group">
+                            <label>Bio</label>
+                            <textarea class="profile-bio" placeholder="Coller la bio du profil ici"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Tweets récents (un par ligne)</label>
+                            <textarea class="profile-tweets" placeholder="Coller les tweets ici, un par ligne"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn" id="addProfile">➕ Ajouter un profil</button>
+                <button class="btn btn-secondary" id="clearProfiles">🗑️ Tout effacer</button>
+                <button class="btn btn-success" id="loadExample">📝 Charger exemple</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <button class="btn" id="analyze">🚀 ANALYSER LES PROFILS</button>
+        </div>
+
+        <div class="loader" id="loader">
+            <div class="spinner"></div>
+            <p style="margin-top: 15px; color: #667eea; font-weight: 600;">Analyse en cours...</p>
+        </div>
+
+        <div class="results-container" id="resultsContainer">
+            <h2 style="margin-bottom: 20px;">📊 Résultats de l'analyse</h2>
+            <div id="resultsContent"></div>
+
+            <div class="export-buttons">
+                <a href="/export/csv" class="btn btn-export" target="_blank">📥 Exporter CSV</a>
+                <a href="/export/json" class="btn btn-export" target="_blank">📥 Exporter JSON</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Gestion de l'ajout de profils
+        document.getElementById('addProfile').addEventListener('click', () => {
+            const container = document.getElementById('profilesContainer');
+            const newProfile = document.createElement('div');
+            newProfile.className = 'profile-entry';
+            newProfile.innerHTML = `
+                <div class="form-group">
+                    <label>Username (ex: @username)</label>
+                    <input type="text" class="profile-username" placeholder="@username">
+                </div>
+                <div class="form-group">
+                    <label>Bio</label>
+                    <textarea class="profile-bio" placeholder="Coller la bio du profil ici"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Tweets récents (un par ligne)</label>
+                    <textarea class="profile-tweets" placeholder="Coller les tweets ici, un par ligne"></textarea>
+                </div>
+            `;
+            container.appendChild(newProfile);
+        });
+
+        // Effacer tous les profils
+        document.getElementById('clearProfiles').addEventListener('click', () => {
+            if (confirm('Voulez-vous vraiment effacer tous les profils ?')) {
+                document.getElementById('profilesContainer').innerHTML = '';
+                document.getElementById('addProfile').click();
+            }
+        });
+
+        // Charger un exemple
+        document.getElementById('loadExample').addEventListener('click', () => {
+            document.getElementById('profilesContainer').innerHTML = `
+                <div class="profile-entry">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" class="profile-username" value="@marie_copy">
+                    </div>
+                    <div class="form-group">
+                        <label>Bio</label>
+                        <textarea class="profile-bio">Copywriter freelance 🇫🇷 | J'aide les entrepreneurs à mieux vendre grâce aux mots | Marketing & storytelling</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Tweets récents</label>
+                        <textarea class="profile-tweets">Comment créer une accroche qui capte l'attention en 3 secondes ?
+Je galère à trouver les bons mots pour mes landing pages...
+Astuce copywriting : toujours commencer par le problème du client
+En train de préparer un nouveau produit sur la vente en ligne</textarea>
+                    </div>
+                </div>
+                <div class="profile-entry">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" class="profile-username" value="@julien_marketing">
+                    </div>
+                    <div class="form-group">
+                        <label>Bio</label>
+                        <textarea class="profile-bio">Growth Marketer | Expert funnel & conversion | Formation e-commerce | 10 ans d'expérience</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Tweets récents</label>
+                        <textarea class="profile-tweets">Mon funnel de vente ne convertit pas assez, besoin d'optimiser
+Lancement de ma formation sur l'acquisition client la semaine prochaine
+Comment doubler votre taux de conversion avec 3 astuces simples</textarea>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('keywords').value = 'copywriting, accroche, conversion, marketing, vente';
+        });
+
+        // Analyse
+        document.getElementById('analyze').addEventListener('click', async () => {
+            // Réinitialisation
+            document.getElementById('errorMessage').classList.remove('show');
+            document.getElementById('resultsContainer').classList.remove('show');
+
+            // Récupération des profils
+            const profileEntries = document.querySelectorAll('.profile-entry');
+            const profiles = [];
+
+            profileEntries.forEach(entry => {
+                const username = entry.querySelector('.profile-username').value.trim();
+                const bio = entry.querySelector('.profile-bio').value.trim();
+                const tweets = entry.querySelector('.profile-tweets').value.trim();
+
+                if (username) {
+                    profiles.push({ username, bio, tweets });
+                }
+            });
+
+            if (profiles.length === 0) {
+                showError('Veuillez ajouter au moins un profil');
+                return;
+            }
+
+            // Récupération des paramètres
+            const keywords = document.getElementById('keywords').value
+                .split(',')
+                .map(k => k.trim())
+                .filter(k => k);
+
+            const language = document.getElementById('language').value;
+            const minActivity = parseInt(document.getElementById('minActivity').value) || 1;
+
+            // Affichage du loader
+            document.getElementById('loader').classList.add('show');
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        profiles,
+                        keywords,
+                        language,
+                        min_activity: minActivity
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Erreur lors de l\'analyse');
+                }
+
+                displayResults(data.results);
+
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                document.getElementById('loader').classList.remove('show');
+            }
+        });
+
+        function displayResults(results) {
+            const container = document.getElementById('resultsContent');
+            container.innerHTML = '';
+
+            results.forEach(result => {
+                const div = document.createElement('div');
+                div.className = 'result-item';
+
+                // Classe selon le score
+                if (result.score >= 70) {
+                    div.classList.add('high-score');
+                } else if (result.score >= 50) {
+                    div.classList.add('medium-score');
+                } else {
+                    div.classList.add('low-score');
+                }
+
+                // Thématiques
+                const themesHTML = result.themes.map(t =>
+                    `<span class="badge badge-theme">${t}</span>`
+                ).join('');
+
+                // Signaux
+                const signalsHTML = result.signals.map(s =>
+                    `<span class="badge badge-signal">${s}</span>`
+                ).join('');
+
+                div.innerHTML = `
+                    <div class="result-header">
+                        <div class="username">${result.username}</div>
+                        <div class="score">${result.score}</div>
+                    </div>
+                    <div class="result-details">
+                        <p style="margin-bottom: 10px;"><strong>${result.explanation}</strong></p>
+                        ${themesHTML ? `<div style="margin-top: 10px;">${themesHTML}</div>` : ''}
+                        ${signalsHTML ? `<div style="margin-top: 10px;">${signalsHTML}</div>` : ''}
+                    </div>
+                `;
+
+                container.appendChild(div);
+            });
+
+            document.getElementById('resultsContainer').classList.add('show');
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = '❌ ' + message;
+            errorDiv.classList.add('show');
+        }
+    </script>
+</body>
+</html>
