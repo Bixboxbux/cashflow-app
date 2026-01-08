@@ -1,6 +1,6 @@
 """
-X Profile Analyzer - Application Web
-Interface simple pour analyser des profils X/Twitter
+X Profile Analyzer - Application Web SÉCURISÉE
+Interface simple pour analyser des profils X/Twitter avec authentification
 """
 
 from flask import Flask, render_template, request, jsonify, send_file
@@ -8,14 +8,39 @@ from analyzer import ProfileAnalyzer, Profile, AnalysisResult
 import csv
 import io
 import json
+import os
 from datetime import datetime
 from typing import List
+from functools import wraps
 
 app = Flask(__name__)
 
+# Clé API pour sécuriser l'accès (à définir dans les variables d'environnement Render)
+API_KEY = os.environ.get('API_KEY', 'change_moi_en_production_xyz789')
 
 # Stockage en mémoire des résultats d'analyse
 analysis_history: List[AnalysisResult] = []
+
+
+def require_api_key(f):
+    """Décorateur pour vérifier la clé API"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Récupérer la clé depuis le header ou le body JSON
+        provided_key = request.headers.get('X-API-Key')
+        
+        if not provided_key and request.is_json:
+            provided_key = request.get_json().get('api_key')
+        
+        if not provided_key or provided_key != API_KEY:
+            return jsonify({
+                'error': 'Clé API manquante ou invalide',
+                'message': 'Fournissez votre clé API dans le header X-API-Key ou dans le body JSON'
+            }), 401
+        
+        return f(*args, **kwargs)
+    
+    return decorated_function
 
 
 @app.route('/')
@@ -25,8 +50,9 @@ def index():
 
 
 @app.route('/analyze', methods=['POST'])
+@require_api_key
 def analyze():
-    """Endpoint pour analyser des profils"""
+    """Endpoint pour analyser des profils - PROTÉGÉ"""
     try:
         data = request.get_json()
 
@@ -89,8 +115,9 @@ def analyze():
 
 
 @app.route('/export/csv')
+@require_api_key
 def export_csv():
-    """Exporte les résultats en CSV"""
+    """Exporte les résultats en CSV - PROTÉGÉ"""
     try:
         if not analysis_history:
             return "Aucune analyse disponible", 404
@@ -151,8 +178,9 @@ def export_csv():
 
 
 @app.route('/export/json')
+@require_api_key
 def export_json():
-    """Exporte les résultats en JSON"""
+    """Exporte les résultats en JSON - PROTÉGÉ"""
     try:
         if not analysis_history:
             return jsonify({'error': 'Aucune analyse disponible'}), 404
@@ -188,16 +216,18 @@ def export_json():
 
 @app.route('/health')
 def health():
-    """Endpoint de santé"""
-    return jsonify({'status': 'ok', 'version': '1.0.0'})
+    """Endpoint de santé - PUBLIC (pour monitoring Render)"""
+    return jsonify({'status': 'ok', 'version': '1.0.0-secured'})
 
 
 if __name__ == '__main__':
     print("=" * 60)
-    print("X PROFILE ANALYZER - Démarrage")
+    print("X PROFILE ANALYZER - Démarrage (VERSION SÉCURISÉE)")
     print("=" * 60)
     print("Interface web disponible sur : http://localhost:5000")
+    print(f"Clé API active : {API_KEY[:10]}...")
     print("Appuyez sur Ctrl+C pour arrêter")
     print("=" * 60)
 
     app.run(debug=True, host='0.0.0.0', port=5000)
+                
