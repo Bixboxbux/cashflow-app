@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Professional IBKR Options Trading Signal Analysis Dashboard">
+    <title>{{ title }} - Options Signal Dashboard</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">📊</div>
+                    <div>
+                        <div class="logo-text">IBKR Options Assistant</div>
+                        <div class="logo-subtitle">Signal Analysis Dashboard</div>
+                    </div>
+                </div>
+
+                <div class="status-indicator">
+                    <span id="status-dot" class="status-dot disconnected"></span>
+                    <span id="status-text">Connecting...</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Safety Banner -->
+            <div class="safety-banner">
+                <span class="safety-icon">⚠️</span>
+                <div class="safety-text">
+                    <strong>READ-ONLY MODE</strong> — This system provides analysis only.
+                    No automated trading. All decisions require manual execution.
+                    Paper trading connection only.
+                </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="stats-bar">
+                <div class="stat-card">
+                    <div id="stat-total" class="stat-value">0</div>
+                    <div class="stat-label">Total Alerts</div>
+                </div>
+                <div class="stat-card">
+                    <div id="stat-buy" class="stat-value buy">0</div>
+                    <div class="stat-label">Buy Signals</div>
+                </div>
+                <div class="stat-card">
+                    <div id="stat-sell" class="stat-value sell">0</div>
+                    <div class="stat-label">Sell Signals</div>
+                </div>
+                <div class="stat-card">
+                    <div id="stat-wait" class="stat-value wait">0</div>
+                    <div class="stat-label">Wait</div>
+                </div>
+                <div class="stat-card">
+                    <div id="stat-confidence" class="stat-value">0%</div>
+                    <div class="stat-label">Avg Confidence</div>
+                </div>
+                <div class="stat-card">
+                    <div id="stat-actionable" class="stat-value">0%</div>
+                    <div class="stat-label">Actionable</div>
+                </div>
+            </div>
+
+            <!-- Filters Section -->
+            <section class="filters-section">
+                <div class="filters-header">
+                    <h2 class="filters-title">
+                        🔍 Filters
+                    </h2>
+                    <span id="last-update" class="text-muted" style="font-size: 0.75rem;"></span>
+                </div>
+
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label class="filter-label" for="filter-symbol">Symbol</label>
+                        <select id="filter-symbol" class="filter-select">
+                            <option value="">All Symbols</option>
+                            {% for symbol in watchlist %}
+                            <option value="{{ symbol }}">{{ symbol }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="filter-label" for="filter-type">Option Type</label>
+                        <select id="filter-type" class="filter-select">
+                            <option value="">All Types</option>
+                            <option value="CALL">📈 Calls Only</option>
+                            <option value="PUT">📉 Puts Only</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="filter-label" for="filter-decision">Decision</label>
+                        <select id="filter-decision" class="filter-select">
+                            <option value="">All Decisions</option>
+                            <option value="BUY">✅ BUY Only</option>
+                            <option value="SELL">🔻 SELL Only</option>
+                            <option value="WAIT">⏳ WAIT Only</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="filter-label" for="filter-confidence">Min Confidence</label>
+                        <input type="number" id="filter-confidence" class="filter-input"
+                               min="0" max="100" step="5" value="0" placeholder="0%">
+                    </div>
+
+                    <div class="filter-group" style="display: flex; flex-direction: row; align-items: flex-end; gap: 0.5rem;">
+                        <button id="btn-apply-filters" class="btn btn-primary">Apply</button>
+                        <button id="btn-reset-filters" class="btn btn-secondary">Reset</button>
+                        <button id="btn-refresh" class="btn btn-secondary">🔄 Refresh</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Alerts Container -->
+            <section id="alerts-container">
+                <div class="loading-overlay">
+                    <div class="loading-spinner"></div>
+                    <p>Loading alerts...</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-links">
+                <a href="/api/docs">API Documentation</a>
+                <a href="/health">System Health</a>
+            </div>
+            <p>
+                IBKR Options Trading Assistant v1.0.0 — For educational and analysis purposes only.
+                <br>
+                <strong>Not financial advice. Trade at your own risk.</strong>
+            </p>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
