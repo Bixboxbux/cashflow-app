@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Real-time institutional options flow tracker">
+    <title>{{ title }} - Institutional Flow Tracker</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="/static/css/flow-dashboard.css">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐋</text></svg>">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo-icon">🐋</div>
+                    <div class="logo-text">
+                        <h1>Institutional Flow Tracker</h1>
+                        <span class="subtitle">Real-Time Options Flow Analysis</span>
+                    </div>
+                </div>
+
+                <div class="status-section">
+                    <div class="connection-status">
+                        <span id="status-dot" class="status-dot demo"></span>
+                        <span id="status-text">Demo Mode</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Safety Banner -->
+        <div class="safety-banner">
+            <span class="safety-icon">⚠️</span>
+            <div class="safety-text">
+                <strong>READ-ONLY</strong> — This system provides analysis only. No automated trading.
+                All decisions require manual execution. Paper trading connection only.
+            </div>
+        </div>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div id="stat-total" class="stat-value">0</div>
+                <div class="stat-label">Total Signals</div>
+            </div>
+            <div class="stat-card">
+                <div id="stat-bullish" class="stat-value bullish">0</div>
+                <div class="stat-label">Bullish</div>
+            </div>
+            <div class="stat-card">
+                <div id="stat-bearish" class="stat-value bearish">0</div>
+                <div class="stat-label">Bearish</div>
+            </div>
+            <div class="stat-card">
+                <div id="stat-sweeps" class="stat-value sweep">0</div>
+                <div class="stat-label">Sweeps</div>
+            </div>
+            <div class="stat-card">
+                <div id="stat-whales" class="stat-value neutral">0</div>
+                <div class="stat-label">Whales</div>
+            </div>
+            <div class="stat-card">
+                <div id="stat-premium" class="stat-value">$0</div>
+                <div class="stat-label">Total Premium</div>
+            </div>
+        </div>
+
+        <!-- Filters Section -->
+        <section class="filters-section">
+            <div class="filters-header">
+                <span class="filters-title">🔍 Filters</span>
+                <span id="last-update" style="font-size: 0.75rem; color: var(--text-muted);"></span>
+            </div>
+
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label class="filter-label" for="filter-symbol">Symbol</label>
+                    <input type="text" id="filter-symbol" class="filter-input" placeholder="e.g., HOOD, NVDA">
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label" for="filter-direction">Direction</label>
+                    <select id="filter-direction" class="filter-select">
+                        <option value="">All Directions</option>
+                        <option value="BULLISH">📈 Bullish</option>
+                        <option value="BEARISH">📉 Bearish</option>
+                        <option value="NEUTRAL">➡️ Neutral</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label" for="filter-type">Signal Type</label>
+                    <select id="filter-type" class="filter-select">
+                        <option value="">All Types</option>
+                        <option value="INSTITUTIONAL_FLOW">Institutional Flow</option>
+                        <option value="SWEEP">Sweep</option>
+                        <option value="BLOCK">Block Trade</option>
+                        <option value="DARK_POOL">Dark Pool</option>
+                        <option value="UNUSUAL_VOLUME">Unusual Volume</option>
+                        <option value="GOLDEN_SWEEP">Golden Sweep</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label" for="filter-premium">Min Premium ($)</label>
+                    <select id="filter-premium" class="filter-select">
+                        <option value="0">All Premiums</option>
+                        <option value="25000">> $25K</option>
+                        <option value="50000">> $50K</option>
+                        <option value="100000">> $100K</option>
+                        <option value="250000">> $250K (Whale)</option>
+                        <option value="1000000">> $1M (Mega Whale)</option>
+                    </select>
+                </div>
+
+                <div class="filter-group" style="display: flex; flex-direction: row; align-items: flex-end; gap: 8px;">
+                    <button id="btn-apply-filters" class="btn btn-primary">Apply</button>
+                    <button id="btn-reset-filters" class="btn btn-secondary">Reset</button>
+                    <button id="btn-refresh" class="btn btn-secondary">🔄</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Flow Feed -->
+        <main class="main-grid">
+            <div id="flow-feed" class="flow-feed">
+                <div class="loading-overlay">
+                    <div class="loading-spinner"></div>
+                    <p>Loading flow signals...</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>
+                Institutional Flow Tracker v1.0.0 — For educational and analysis purposes only.
+                <br>
+                <strong>Not financial advice. Trade at your own risk.</strong>
+            </p>
+        </footer>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="/static/js/flow-dashboard.js"></script>
+</body>
+</html>

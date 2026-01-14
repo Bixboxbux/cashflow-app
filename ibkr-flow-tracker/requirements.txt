@@ -1,0 +1,50 @@
+# Institutional Flow Tracker - Dependencies
+# ================================================
+#
+# Install with: pip install -r requirements.txt
+#
+# Python 3.10+ required
+
+# ─────────────────────────────────────────────────
+# Web Framework & API
+# ─────────────────────────────────────────────────
+
+# FastAPI - Modern async web framework
+fastapi>=0.109.0
+
+# Uvicorn - ASGI server
+uvicorn[standard]>=0.27.0
+
+# Jinja2 - Template engine
+jinja2>=3.1.3
+
+# WebSocket support
+websockets>=12.0
+
+# ─────────────────────────────────────────────────
+# IBKR Integration
+# ─────────────────────────────────────────────────
+
+# Interactive Brokers API wrapper
+ib_insync>=0.9.86
+
+# Async HTTP
+aiohttp>=3.9.0
+
+# ─────────────────────────────────────────────────
+# Data Validation
+# ─────────────────────────────────────────────────
+
+# Pydantic - Type validation
+pydantic>=2.5.0
+
+# ─────────────────────────────────────────────────
+# Notes
+# ─────────────────────────────────────────────────
+#
+# IBKR Requirements:
+# - TWS or IB Gateway must be running
+# - Paper Trading enabled (port 7497 or 4002)
+# - API connections enabled
+#
+# Demo mode works without IBKR connection
