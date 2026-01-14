@@ -52,6 +52,7 @@ from core import (
     IBKRConnection, IBKRConnectionError, SafetyViolationError,
     FlowDetector, FlowClassifier, AccumulationTracker,
     TechnicalLevelsCalculator,
+    IBKRRealFeed, create_real_feed_with_broadcast,
 )
 from api import app, get_app_state, get_ws_manager, broadcast_signal
 
@@ -393,9 +394,17 @@ class FlowTracker:
     - Accumulation tracking
     """
 
-    def __init__(self, demo_mode: bool = True):
+    # Default symbols for live tracking
+    DEFAULT_SYMBOLS = [
+        "SPY", "QQQ", "AAPL", "TSLA", "NVDA", "META", "GOOGL",
+        "AMZN", "MSFT", "AMD", "HOOD", "COIN", "NFLX", "PLTR"
+    ]
+
+    def __init__(self, demo_mode: bool = True, symbols: List[str] = None):
         self.demo_mode = demo_mode
+        self.symbols = symbols or self.DEFAULT_SYMBOLS
         self.connection = None
+        self.real_feed = None
         self.detector = FlowDetector()
         self.classifier = FlowClassifier()
         self.accumulation_tracker = AccumulationTracker()
@@ -408,6 +417,8 @@ class FlowTracker:
         logger.info("INSTITUTIONAL FLOW TRACKER")
         logger.info("=" * 60)
         logger.info(f"Mode: {'DEMO' if demo_mode else 'LIVE (Paper Trading)'}")
+        if not demo_mode:
+            logger.info(f"Symbols: {', '.join(self.symbols)}")
         logger.info("=" * 60)
 
     async def initialize(self):
@@ -417,17 +428,33 @@ class FlowTracker:
             return True
 
         try:
-            logger.info("Initializing IBKR connection...")
-            self.connection = IBKRConnection()
-            await self.connection.connect()
-            logger.info("✓ IBKR connected (Paper Trading)")
+            logger.info("Initializing IBKR Real Feed...")
+            logger.info("Connecting to IBKR TWS/Gateway...")
+
+            # Create real feed with detector and broadcast callback
+            self.real_feed = IBKRRealFeed(
+                flow_detector=self.detector,
+                signal_callback=broadcast_signal,
+                host=CONFIG.ibkr.host,
+                port=CONFIG.ibkr.port,
+                client_id=CONFIG.ibkr.client_id,
+            )
+
+            # Connect
+            await self.real_feed.connect()
+            logger.info("✓ IBKR connected (Paper Trading, READ-ONLY)")
+
+            # Subscribe to options flow
+            count = await self.real_feed.subscribe_options_flow(self.symbols)
+            logger.info(f"✓ Subscribed to {count} option contracts")
+
             return True
 
         except SafetyViolationError as e:
             logger.error(f"SAFETY VIOLATION: {e}")
             return False
 
-        except IBKRConnectionError as e:
+        except Exception as e:
             logger.error(f"Connection failed: {e}")
             logger.info("Falling back to DEMO mode...")
             self.demo_mode = True
@@ -443,16 +470,21 @@ class FlowTracker:
                 interval=CONFIG.demo_signal_interval_seconds
             )
         else:
-            # Real IBKR mode would go here
-            while self.running:
-                await asyncio.sleep(1)
+            # Run real IBKR feed
+            if self.real_feed:
+                await self.real_feed.run_forever()
+            else:
+                while self.running:
+                    await asyncio.sleep(1)
 
     async def shutdown(self):
         """Clean shutdown."""
         logger.info("Shutting down...")
         self.running = False
 
-        if self.connection:
+        if self.real_feed:
+            await self.real_feed.disconnect()
+        elif self.connection:
             await self.connection.disconnect()
 
         logger.info("Shutdown complete")
@@ -500,11 +532,24 @@ SAFETY NOTICE:
         '--debug', action='store_true',
         help='Enable debug mode'
     )
+    parser.add_argument(
+        '--symbols', '-s', type=str, default=None,
+        help='Comma-separated symbols to track (e.g., AAPL,TSLA,SPY)'
+    )
+    parser.add_argument(
+        '--ibkr-port', type=int, default=7497,
+        help='IBKR TWS/Gateway port (paper: 7497/4002, default: 7497)'
+    )
 
     args = parser.parse_args()
 
     # Demo mode is default unless --live is specified
     demo_mode = not args.live
+
+    # Parse symbols
+    symbols = None
+    if args.symbols:
+        symbols = [s.strip().upper() for s in args.symbols.split(",")]
 
     # Setup logging
     setup_logging()
@@ -524,8 +569,12 @@ SAFETY NOTICE:
 ╚══════════════════════════════════════════════════════════════╝
     """)
 
+    # Update IBKR port if specified
+    if args.ibkr_port:
+        CONFIG.ibkr.port = args.ibkr_port
+
     # Create tracker
-    tracker = FlowTracker(demo_mode=demo_mode)
+    tracker = FlowTracker(demo_mode=demo_mode, symbols=symbols)
 
     # Initialize
     async def init_and_start():
